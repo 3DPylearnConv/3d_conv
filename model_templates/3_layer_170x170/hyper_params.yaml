@@ -1,9 +1,0 @@
-
-num_input_channels: 4
-batch_size: 10
-output_channels_h0: 96
-output_channels_h1: 256
-output_channels_h2: 512
-output_channels_h3: 512
-output_channels_h4: 1024
-max_epochs: 100000
