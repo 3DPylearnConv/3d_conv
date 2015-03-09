@@ -1,3 +1,0 @@
-#!/bin/bash
-avconv -r 10 -i models/processed_per_channel_0_to_1_normalization3crotch_170_170_greyscale_5_layer_170x170_1_output_10_22_14_28/weights/weight_%d.png -b:v 10000k processed_per_channel_0_to_1_normalization3crotch_170_170_greyscale_5_layer_170x170_1_output_10_22_14_28.mp4
-
