@@ -1,7 +1,7 @@
 !obj:pylearn2.train.Train {
-    dataset: &train !obj:datasets.c01b_hdf5_dataset.C01B_HDF5_Dataset {
-        topo_view_key: 'c01b_train_patches',
-        y_key: 'c01b_train_patch_labels',
+    dataset: &train !obj:datasets.rgbd_hdf5_dataset.RGBD_HDF5_Dataset {
+        topo_view_key: 'rgbd',
+        y_key: 'grasp_type',
         hdf5_filepath: %(dataset)s,
     },
     model: !obj:pylearn2.models.mlp.MLP {
@@ -73,20 +73,20 @@
     algorithm: !obj:pylearn2.training_algorithms.sgd.SGD {
         batch_size: %(batch_size)i,
         learning_rate: 0.1,
-        batches_per_iter: 5,
+        batches_per_iter: 2,
         monitoring_batch_size: 2,
-        monitoring_batches: 5,
+        monitoring_batches: 2,
         monitoring_dataset:
             {
-                 'valid' : !obj:datasets.c01b_hdf5_dataset.C01B_HDF5_Dataset {
-                                topo_view_key: 'c01b_valid_patches',
-                                y_key: 'c01b_valid_patch_labels',
-                                hdf5_filepath: %(dataset)s,
+                 'valid' : !obj:datasets.rgbd_hdf5_dataset.RGBD_HDF5_Dataset {
+                            topo_view_key: 'rgbd',
+                            y_key: 'grasp_type',
+                            hdf5_filepath: %(dataset)s,
             },
-                 'test' : !obj:datasets.c01b_hdf5_dataset.C01B_HDF5_Dataset {
-                                topo_view_key: 'c01b_test_patches',
-                                y_key: 'c01b_test_patch_labels',
-                                hdf5_filepath: %(dataset)s,
+                 'test' : !obj:datasets.rgbd_hdf5_dataset.RGBD_HDF5_Dataset {
+                            topo_view_key: 'rgbd',
+                            y_key: 'grasp_type',
+                            hdf5_filepath: %(dataset)s,
             }
         },
         cost: !obj:pylearn2.costs.cost.SumOfCosts {

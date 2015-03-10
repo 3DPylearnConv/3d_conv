@@ -40,12 +40,12 @@ def build_model():
     hyper_params_file = open(paths.MODEL_TEMPLATE_DIR + model_template + "/hyper_params.yaml", 'r').read()
 
     dataset = h5py.File(paths.TRAINING_DATASET_DIR + dataset_filename)
-    num_labels = dataset['c01b_train_patch_labels'].shape[-1]
+    num_labels = dataset['num_grasp_type'][0] * 4
 
     hyper_params_dict = yaml_parse.load(hyper_params_file)
     hyper_params_dict['save_path'] = get_save_path(model_template, dataset_filename)
     hyper_params_dict['dataset'] = paths.TRAINING_DATASET_DIR + dataset_filename
-    hyper_params_dict['num_output_channels'] = num_labels
+    hyper_params_dict['num_output_channels'] = dataset['num_grasp_type'][0] * dataset['num_finger_type'][0]
 
     return model_template_yaml, hyper_params_dict
 

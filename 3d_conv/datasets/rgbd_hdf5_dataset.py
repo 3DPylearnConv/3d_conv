@@ -51,9 +51,13 @@ class RGBD_HDF5_Dataset(pylearn2.datasets.dataset.Dataset):
 
         self.patch_size = patch_size
 
-        if not 'max_grasp_type' in self.h5py_dataset.keys():
-            self.h5py_dataset.create_dataset('max_grasp_type', (1,))
-            self.h5py_dataset['max_grasp_type'][0] = self.h5py_dataset['grasp_type'][:].max() + 1
+        if not 'num_grasp_type' in self.h5py_dataset.keys():
+            self.h5py_dataset.create_dataset('num_grasp_type', (1,))
+            self.h5py_dataset['num_grasp_type'][0] = self.h5py_dataset['grasp_type'][:].max() + 1
+
+        if not 'num_finger_type' in self.h5py_dataset.keys():
+            self.h5py_dataset.create_dataset('num_finger_type', (1,))
+            self.h5py_dataset['num_finger_type'][0] = self.h5py_dataset['uvd'].shape[1]
 
     def adjust_for_viewer(self, X):
         return X[:, :, :, 0:3]
@@ -146,6 +150,9 @@ class HDF5_Iterator():
 
         batch_indices = self._subset_iterator.next()
 
+        if isinstance(batch_indices, slice):
+            batch_indices = np.array(range(batch_indices.start, batch_indices.stop))
+
         # if we are using a shuffled sequential subset iterator
         # then next_index will be something like:
         # array([13713, 14644, 30532, 32127, 35746, 44163, 48490, 49363, 52141, 52216])
@@ -166,7 +173,7 @@ class HDF5_Iterator():
         rgbd_label_selection = self.dataset.y[batch_indices, :]
 
         num_uvd_per_rgbd = self.dataset.h5py_dataset['uvd'].shape[1]
-        num_grasp_types = self.dataset.h5py_dataset['max_grasp_type'][0]
+        num_grasp_types = self.dataset.h5py_dataset['num_grasp_type'][0]
 
         finger_indices = np.random.randint(0, num_uvd_per_rgbd, size=batch_size)
 
