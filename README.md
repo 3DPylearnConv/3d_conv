@@ -19,3 +19,6 @@ Contains .yaml files specifying layer configurations, learning rates, and other 
 
 ####models directory
 When a model is trained, all yaml files from the model_templates directory are copied over here.  The .pkl file for the model is also stored here, along with images of the weights generated as the model trains.
+
+####set_paths.sh
+Places this projects code on your PYTHONPATH and also sets HOME_PATH which is used in paths.py to determine where different directories are located.
