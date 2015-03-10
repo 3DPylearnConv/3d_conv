@@ -6,7 +6,7 @@ April 14 - Final presentation due
 # 3d Convolution for Pylearn2
 ## Project Overview
 ####contact_and_potential_grasps_small.h5
-A small dataset containing 8 grasps.  Each grasp has an rgbd image, and 17 uvd tuples.  The uvd values are the pixel and depth values for the positions of the virtual contacts of the hand within the image.  The uvd values at indices 0, 8,12,16 correspond to the palm, and three fingertips.
+A small dataset containing 8 grasps.  Each grasp has an rgbd image, and 4 uvd tuples.  The uvd values are the pixel location and depth values for the palm, and three fingertips.
 
 ####rgbd_hdf5_dataset.py
 Wraps around an hdf5 datafile, and provides pairs of patches and labels at training time.
