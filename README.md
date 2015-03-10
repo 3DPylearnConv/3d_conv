@@ -22,3 +22,9 @@ When a model is trained, all yaml files from the model_templates directory are c
 
 ####set_paths.sh
 Places this projects code on your PYTHONPATH and also sets HOME_PATH which is used in paths.py to determine where different directories are located.
+
+####example usage
+```
+$ source set_paths.sh
+$ python train_model.py
+```
