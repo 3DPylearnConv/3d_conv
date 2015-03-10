@@ -57,6 +57,9 @@ def prep_model_save_path(save_path, model_yaml, hyper_params_dict):
 
     assert paths.MODEL_DIR in save_path
 
+    if not os.path.exists(paths.MODEL_DIR):
+        os.mkdir(paths.MODEL_DIR)
+
     if os.path.exists(save_path):
         shutil.rmtree(save_path)
 
