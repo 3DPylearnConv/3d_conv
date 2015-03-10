@@ -10,6 +10,28 @@ import pylearn2.utils.rng
 from pylearn2.utils.iteration import SubsetIterator , resolve_iterator_class
 from pylearn2.utils import safe_izip, wraps
 
+
+class GaussianNoisePostProcessor():
+
+    def __init__(self, sigma=.2, mu=0, prob_noise_added=.2):
+        self.sigma = sigma
+        self.mu = mu
+        self.prob_noise_added = prob_noise_added
+
+    def apply(self, batch_x, batch_y):
+
+        #we only add noise to the locations where the mask is True
+        mask = np.random.rand(*batch_x.shape) < self.prob_noise_added
+
+        #this noise is centered around mu with standard dev sigma
+        noise = self.sigma * np.random.randn(*batch_x.shape) + self.mu
+
+        #apply noise where mask is true, zero otherwise
+        masked_noise = np.where(mask, noise, 0)
+
+        return batch_x + masked_noise, batch_y
+
+
 class C01B_HDF5_Dataset(pylearn2.datasets.dataset.Dataset):
 
     def __init__(self, topo_view_key, y_key, hdf5_filepath):
@@ -152,23 +174,5 @@ class HDF5_Iterator():
         return self._subset_iterator.stochastic
 
 
-class GaussianNoisePostProcessor():
 
-    def __init__(self, sigma=.2, mu=0, prob_noise_added=.2):
-        self.sigma = sigma
-        self.mu = mu
-        self.prob_noise_added = prob_noise_added
-
-    def apply(self, batch_x, batch_y):
-
-        #we only add noise to the locations where the mask is True
-        mask = np.random.rand(*batch_x.shape) < self.prob_noise_added
-
-        #this noise is centered around mu with standard dev sigma
-        noise = self.sigma * np.random.randn(*batch_x.shape) + self.mu
-
-        #apply noise where mask is true, zero otherwise
-        masked_noise = np.where(mask, noise, 0)
-
-        return batch_x + masked_noise, batch_y
 
