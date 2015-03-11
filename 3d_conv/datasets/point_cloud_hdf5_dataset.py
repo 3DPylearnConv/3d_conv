@@ -85,19 +85,22 @@ def create_point_cloud_vectorized(rgbd_image, structured=False):
 
 
 #this creates a 3d occupancy grid based on an rgbd image.
-def create_voxel_grid(rgbd, voxel_resolution=1.0, voxel_grid_dimensions=(30, 30, 30)):
+def create_voxel_grid_around_point(rgbd, patch_center, voxel_resolution=1.0, voxel_grid_dimension=72):
 
     points = create_point_cloud_vectorized(rgbd, structured=False)
 
-    voxel_grid = np.zeros(voxel_grid_dimensions)
+    voxel_grid = np.zeros((voxel_grid_dimension,
+                           voxel_grid_dimension,
+                           voxel_grid_dimension,
+                            1))
 
     for point in points:
 
         #get x,y,z indice for the grid
-        voxel_index = np.floor(point/voxel_resolution) * voxel_resolution
+        voxel_index_x, voxel_index_y, voxel_index_z = np.floor((point - patch_center + voxel_grid_dimension/2) / voxel_resolution) * voxel_resolution
 
         #mark voxel at this x,y,z indice as occupied.
-        voxel_grid[voxel_index] = 1
+        voxel_grid[voxel_index_x, voxel_index_y, voxel_index_z, 0] = 1
 
     return voxel_grid
 
@@ -129,7 +132,7 @@ class HDF5_PointCloud_Iterator(HDF5_Iterator):
 
         patch_size = self.dataset.patch_size
 
-        batch_x = np.zeros((batch_size, patch_size, patch_size, patch_size, 4))
+        batch_x = np.zeros((batch_size, patch_size, patch_size, patch_size, 1))
         batch_y = np.zeros((batch_size, num_uvd_per_rgbd * num_grasp_types))
 
         #go through and append patches to batch_x, batch_y
@@ -139,26 +142,26 @@ class HDF5_PointCloud_Iterator(HDF5_Iterator):
             u, v, d = self.dataset.h5py_dataset['uvd'][batch_index, finger_index, :]
             rgbd = self.dataset.topo_view[batch_index, :, :, :]
 
-            voxel_grid = create_voxel_grid(rgbd)
-
             structured_points = create_point_cloud_vectorized(rgbd, True)
             patch_center_x, patch_center_y, patch_center_z = structured_points[u, v]
+
+            patch = create_voxel_grid_around_point(rgbd, (patch_center_x, patch_center_y, patch_center_z))
 
             grasp_type = self.dataset.y[batch_index, 0]
             grasp_energy = self.dataset.h5py_dataset['energy'][batch_index]
 
             #extract the patch volum around the center point
-            patch = voxel_grid[patch_center_x-patch_size/2.0: patch_center_x+patch_size/2.0,
-                    patch_center_y-patch_size/2.0:patch_center_y+patch_size/2.0,
-                    patch_center_z-patch_size/2.0:patch_center_z+patch_size/2.0]
+            # patch = voxel_grid[patch_center_x-patch_size/2.0: patch_center_x+patch_size/2.0,
+            #         patch_center_y-patch_size/2.0:patch_center_y+patch_size/2.0,
+            #         patch_center_z-patch_size/2.0:patch_center_z+patch_size/2.0]
 
             patch_label = num_uvd_per_rgbd * grasp_type + finger_index
 
             batch_x[i, :, :, :] = patch
             batch_y[i, patch_label] = grasp_energy
 
-        #make batch C01B rather than B01C
-        batch_x = batch_x.transpose(3, 1, 2, 0)
+        #make batch C012B rather than B012C
+        batch_x = batch_x.transpose(4, 1, 2, 3, 0)
 
         #apply post processors to the patches
         for post_processor in self.iterator_post_processors:
