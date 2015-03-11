@@ -81,7 +81,7 @@ class RGBD_HDF5_Dataset(pylearn2.datasets.dataset.Dataset):
     def get_num_examples(self):
         num_rgbd_images = self.topo_view.shape[0]
         num_finger_types = self.h5py_dataset['uvd'].shape[1]
-        return num_rgbd_images
+        return num_rgbd_images * num_finger_types
 
     def get_topo_batch_axis(self):
         return -1
@@ -163,19 +163,13 @@ class HDF5_Iterator():
             batch_indices.sort()
             batch_size = len(batch_indices)
 
-        if isinstance(batch_indices, slice):
-            batch_size = batch_indices.stop - batch_indices.start
-
-        patch_size = self.dataset.patch_size
-
-        #grab data in B01C
-        rgbd_selection = self.dataset.topo_view[batch_indices, :, :, :]
-        rgbd_label_selection = self.dataset.y[batch_indices, :]
-
         num_uvd_per_rgbd = self.dataset.h5py_dataset['uvd'].shape[1]
         num_grasp_types = self.dataset.h5py_dataset['num_grasp_type'][0]
 
-        finger_indices = np.random.randint(0, num_uvd_per_rgbd, size=batch_size)
+        finger_indices = batch_indices % num_uvd_per_rgbd
+        batch_indices = np.floor(batch_indices / num_uvd_per_rgbd)
+
+        patch_size = self.dataset.patch_size
 
         batch_x = np.zeros((batch_size, patch_size, patch_size, 4))
         batch_y = np.zeros((batch_size, num_uvd_per_rgbd * num_grasp_types))
@@ -185,8 +179,8 @@ class HDF5_Iterator():
             batch_index = batch_indices[i]
             finger_index = finger_indices[i]
             u, v, d = self.dataset.h5py_dataset['uvd'][batch_index, finger_index, :]
-            rgbd = rgbd_selection[i]
-            grasp_type = rgbd_label_selection[i][0]
+            rgbd = self.dataset.topo_view[batch_index, :,:,:]
+            grasp_type = self.dataset.y[batch_index, 0]
             grasp_energy = self.dataset.h5py_dataset['energy'][batch_index]
 
             patch = rgbd[u-patch_size/2.0: u+patch_size/2.0, v-patch_size/2.0:v+patch_size/2.0, :]

@@ -25,7 +25,7 @@ class TestRGBDDataset(unittest.TestCase):
 
         num_batches = 4
         num_grasp_types = 8
-        num_finger_types = 17
+        num_finger_types = 4
         num_channels = 4
 
         batch_size = 2
@@ -35,6 +35,9 @@ class TestRGBDDataset(unittest.TestCase):
                                          mode='even_shuffled_sequential')
 
         batch_x, batch_y = iterator.next()
+
+        import IPython
+        IPython.embed()
 
         self.assertEqual(batch_x.shape, (num_channels, self.patch_size, self.patch_size, batch_size))
         self.assertEqual(batch_y.shape, (batch_size, num_finger_types * num_grasp_types))
