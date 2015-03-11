@@ -94,6 +94,7 @@ def create_voxel_grid_around_point(rgbd, patch_center, voxel_resolution=1.0, vox
                            voxel_grid_dimension,
                             1))
 
+    #could be improved significantly either numpy magic or multi-threaded
     for point in points:
 
         #get x,y,z indice for the grid
@@ -145,15 +146,10 @@ class HDF5_PointCloud_Iterator(HDF5_Iterator):
             structured_points = create_point_cloud_vectorized(rgbd, True)
             patch_center_x, patch_center_y, patch_center_z = structured_points[u, v]
 
-            patch = create_voxel_grid_around_point(rgbd, (patch_center_x, patch_center_y, patch_center_z))
+            patch = create_voxel_grid_around_point(rgbd, (patch_center_x, patch_center_y, patch_center_z),voxel_grid_dimension=patch_size)
 
             grasp_type = self.dataset.y[batch_index, 0]
             grasp_energy = self.dataset.h5py_dataset['energy'][batch_index]
-
-            #extract the patch volum around the center point
-            # patch = voxel_grid[patch_center_x-patch_size/2.0: patch_center_x+patch_size/2.0,
-            #         patch_center_y-patch_size/2.0:patch_center_y+patch_size/2.0,
-            #         patch_center_z-patch_size/2.0:patch_center_z+patch_size/2.0]
 
             patch_label = num_uvd_per_rgbd * grasp_type + finger_index
 
