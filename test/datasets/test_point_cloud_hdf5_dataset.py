@@ -37,7 +37,11 @@ class TestPointCloudDataset(unittest.TestCase):
 
         batch_x, batch_y = iterator.next()
 
-        self.assertEqual(batch_x.shape, (num_channels, self.patch_size, self.patch_size, self.patch_size, batch_size))
+        import IPython
+        IPython.embed()
+
+
+        self.assertEqual(batch_x.shape, (batch_size, self.patch_size, num_channels, self.patch_size, self.patch_size))
         self.assertEqual(batch_y.shape, (batch_size, num_finger_types * num_grasp_types))
 
 
