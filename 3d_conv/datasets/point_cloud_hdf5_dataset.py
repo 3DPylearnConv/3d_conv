@@ -156,8 +156,8 @@ class HDF5_PointCloud_Iterator(HDF5_Iterator):
             batch_x[i, :, :, :] = patch
             batch_y[i, patch_label] = grasp_energy
 
-        #make batch C012B rather than B012C
-        batch_x = batch_x.transpose(4, 1, 2, 3, 0)
+        #make batch B2C01 rather than B012C
+        batch_x = batch_x.transpose(0, 3, 4, 1, 2)
 
         #apply post processors to the patches
         for post_processor in self.iterator_post_processors:
