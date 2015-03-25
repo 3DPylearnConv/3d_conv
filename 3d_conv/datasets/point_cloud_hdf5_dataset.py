@@ -85,9 +85,7 @@ def create_point_cloud_vectorized(rgbd_image, structured=False):
 
 
 #this creates a 3d occupancy grid based on an rgbd image.
-def create_voxel_grid_around_point(rgbd, patch_center, voxel_resolution=0.001, num_voxels_per_dim=72):
-
-    points = create_point_cloud_vectorized(rgbd, structured=False)
+def create_voxel_grid_around_point(points, patch_center, voxel_resolution=0.001, num_voxels_per_dim=72):
 
     voxel_grid = np.zeros((num_voxels_per_dim,
                            num_voxels_per_dim,
@@ -147,7 +145,9 @@ class HDF5_PointCloud_Iterator(HDF5_Iterator):
             u, v, d = self.dataset.h5py_dataset['uvd'][batch_index, finger_index, :]
             rgbd = self.dataset.topo_view[batch_index, :, :, :]
 
-            structured_points = create_point_cloud_vectorized(rgbd, True)
+            points = create_point_cloud_vectorized(rgbd, structured=False)
+            structured_points = create_point_cloud_vectorized(points, True)
+
             patch_center_x, patch_center_y, patch_center_z = structured_points[u, v]
 
             patch = create_voxel_grid_around_point(rgbd, (patch_center_x, patch_center_y, patch_center_z),
