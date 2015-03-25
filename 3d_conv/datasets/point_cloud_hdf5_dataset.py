@@ -145,12 +145,15 @@ class HDF5_PointCloud_Iterator(HDF5_Iterator):
             u, v, d = self.dataset.h5py_dataset['uvd'][batch_index, finger_index, :]
             rgbd = self.dataset.topo_view[batch_index, :, :, :]
 
-            points = create_point_cloud_vectorized(rgbd, structured=False)
-            structured_points = create_point_cloud_vectorized(points, True)
+            import IPython
+            IPython.embed()
+
+            structured_points = create_point_cloud_vectorized(rgbd, True)
 
             patch_center_x, patch_center_y, patch_center_z = structured_points[u, v]
 
-            patch = create_voxel_grid_around_point(rgbd, (patch_center_x, patch_center_y, patch_center_z),
+            points = create_point_cloud_vectorized(rgbd, structured=False)
+            patch = create_voxel_grid_around_point(points, (patch_center_x, patch_center_y, patch_center_z),
                                                    num_voxels_per_dim=patch_size)
 
             grasp_type = self.dataset.y[batch_index, 0]
