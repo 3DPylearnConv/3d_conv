@@ -25,6 +25,7 @@ from datasets.model_net_dataset import Model_Net_Dataset
 from layers.hidden_layer import *
 from layers.conv_layer_3d import *
 from layers.layer_utils import *
+from layers.reconLayer import *
 
 def evaluate(learning_rate=0.001, n_epochs=200,
                     nkerns=[20, 50], num_train_batches=30):
@@ -117,12 +118,18 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         rng,
         input=layer2_input,
         n_in=nkerns[1] * finalDimensions * finalDimensions * finalDimensions,
-        n_out=900,
+        n_out=1200,
         activation=relu, drop=drop
     )
 
     # classify the values of the fully-connected sigmoidal layer
-    layer3 = LogisticRegression(input=layer2.output, n_in=900, n_out=10)
+    layer3 = ReconLayer(
+        rng,
+        input=layer2.output,
+        n_in=1200,
+        n_out=xdim*zdim*ydim,
+        activation=T.nnet.sigmoid
+    )
 
     # create a list of all model parameters to be fit by gradient descent
     params = layer3.params + layer2.params + layer1.params + layer0.params
@@ -130,7 +137,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     #L1 = abs(layer0.W).sum() + abs(layer1.W).sum() + abs(layer2.W).sum() + abs(layer3.W).sum()
 
     # the cost we minimize during training is the NLL of the model
-    cost = layer3.negative_log_likelihood(y)
+    cost = layer3.cross_entropy_error(y)
 
     # create a function to compute the mistakes that are made by the model
     test_model = theano.function(
