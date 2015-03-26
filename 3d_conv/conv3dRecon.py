@@ -96,11 +96,15 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     # maxpooling reduces this further to (8/2, 8/2) = (4, 4)
     # 4D output tensor is thus of shape (nkerns[0], nkerns[1], 4, 4)
 
-    newDimensions = zdim - convsize + 1
+    newZ = zdim - convsize + 1
+    newX = zdim - convsize + 1
+    newY = zdim - convsize + 1
+
+
     layer1 = ConvLayer3D(
         rng,
         input=layer0.output,
-        image_shape=(batch_size, newDimensions, nkerns[0], newDimensions, newDimensions),
+        image_shape=(batch_size, newZ, nkerns[0], newX, newY),
         filter_shape=(nkerns[1], convsize, nkerns[0], convsize, convsize),
         poolsize=(0, 0), drop=drop
     )
@@ -111,13 +115,15 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     # or (500, 50 * 4 * 4) = (500, 800) with the default values.
     layer2_input = layer1.output.flatten(2)
 
-    finalDimensions = newDimensions - convsize + 1
+    newZ = newZ - convsize + 1
+    newX = newX - convsize + 1
+    newY = newY - convsize + 1
 
     # construct a fully-connected sigmoidal layer
     layer2 = HiddenLayer(
         rng,
         input=layer2_input,
-        n_in=nkerns[1] * finalDimensions * finalDimensions * finalDimensions,
+        n_in=nkerns[1] * newZ * newX * newY,
         n_out=1000,
         activation=relu, drop=drop
     )
@@ -127,7 +133,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         rng,
         input=layer2.output,
         n_in=1000,
-        n_out=xdim*zdim*ydim * batch_size,
+        n_out=newX*newY*newZ * batch_size,
         activation=T.nnet.sigmoid
     )
 
