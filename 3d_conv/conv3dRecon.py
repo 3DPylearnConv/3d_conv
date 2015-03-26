@@ -239,8 +239,8 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
             mini_batch_x, mini_batch_y = train_iterator.next()
 
-            mini_batch_x = downscale3d(mini_batch_x, downsample_factor)
-            mini_batch_y = downscale3d(mini_batch_y, downsample_factor)
+            mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
+            mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
 
             mini_batch_y = mini_batch_y.flatten()
 
