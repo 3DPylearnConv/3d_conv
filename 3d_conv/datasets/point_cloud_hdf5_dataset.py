@@ -85,23 +85,25 @@ def create_point_cloud_vectorized(rgbd_image, structured=False):
 
 
 #this creates a 3d occupancy grid based on an rgbd image.
-def create_voxel_grid_around_point(rgbd, patch_center, voxel_resolution=1.0, voxel_grid_dimension=72):
+def create_voxel_grid_around_point(points, patch_center, voxel_resolution=0.001, num_voxels_per_dim=72):
 
-    points = create_point_cloud_vectorized(rgbd, structured=False)
-
-    voxel_grid = np.zeros((voxel_grid_dimension,
-                           voxel_grid_dimension,
-                           voxel_grid_dimension,
-                            1))
+    voxel_grid = np.zeros((num_voxels_per_dim,
+                           num_voxels_per_dim,
+                           num_voxels_per_dim,
+                           1))
 
     #could be improved significantly either numpy magic or multi-threaded
     for point in points:
 
         #get x,y,z indice for the grid
-        voxel_index_x, voxel_index_y, voxel_index_z = np.floor((point - patch_center + voxel_grid_dimension/2) / voxel_resolution) * voxel_resolution
+        voxel_index_x, voxel_index_y, voxel_index_z = np.floor((point - patch_center + num_voxels_per_dim/2*voxel_resolution) / voxel_resolution)
 
-        #mark voxel at this x,y,z indice as occupied.
-        voxel_grid[voxel_index_x, voxel_index_y, voxel_index_z, 0] = 1
+        #print voxel_index_x, voxel_index_y, voxel_index_z
+        if 0 < voxel_index_x < num_voxels_per_dim :
+            if 0 < voxel_index_y < num_voxels_per_dim :
+                if 0 < voxel_index_z < num_voxels_per_dim:
+                    #mark voxel at this x,y,z indice as occupied.
+                    voxel_grid[voxel_index_x, voxel_index_y, voxel_index_z, 0] = 1
 
     return voxel_grid
 
@@ -143,10 +145,16 @@ class HDF5_PointCloud_Iterator(HDF5_Iterator):
             u, v, d = self.dataset.h5py_dataset['uvd'][batch_index, finger_index, :]
             rgbd = self.dataset.topo_view[batch_index, :, :, :]
 
+            import IPython
+            IPython.embed()
+
             structured_points = create_point_cloud_vectorized(rgbd, True)
+
             patch_center_x, patch_center_y, patch_center_z = structured_points[u, v]
 
-            patch = create_voxel_grid_around_point(rgbd, (patch_center_x, patch_center_y, patch_center_z),voxel_grid_dimension=patch_size)
+            points = create_point_cloud_vectorized(rgbd, structured=False)
+            patch = create_voxel_grid_around_point(points, (patch_center_x, patch_center_y, patch_center_z),
+                                                   num_voxels_per_dim=patch_size)
 
             grasp_type = self.dataset.y[batch_index, 0]
             grasp_energy = self.dataset.h5py_dataset['energy'][batch_index]
@@ -160,8 +168,8 @@ class HDF5_PointCloud_Iterator(HDF5_Iterator):
         batch_x = batch_x.transpose(0, 3, 4, 1, 2)
 
         #apply post processors to the patches
-        for post_processor in self.iterator_post_processors:
-            batch_x, batch_y = post_processor.apply(batch_x, batch_y)
+        #for post_processor in self.iterator_post_processors:
+        #    batch_x, batch_y = post_processor.apply(batch_x, batch_y)
 
         batch_x = np.array(batch_x, dtype=np.float32)
         batch_y = np.array(batch_y, dtype=np.float32)
