@@ -31,14 +31,6 @@ class ConvLayer3D(object):
         #assert image_shape[1] == filter_shape[1]
         self.input = input
 
-        # there are "num input feature maps * filter height * filter width"
-        # inputs to each hidden unit
-        fan_in = numpy.prod(filter_shape[1:])
-        # each unit in the lower layer receives a gradient from:
-        # "num output feature maps * filter height * filter width" /
-        #   pooling size
-        fan_out = (filter_shape[0] * numpy.prod(filter_shape[2:]) /
-                   numpy.prod(poolsize))
         # initialize weights with random weights
         self.W = theano.shared(numpy.asarray(numpy.random.normal(loc=0., scale=.01, size=filter_shape), dtype=theano.config.floatX),
             borrow=True)

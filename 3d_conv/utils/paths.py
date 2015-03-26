@@ -4,11 +4,12 @@ import os
 #this is the root directory of the data folder
 HOME_PATH = os.environ["HOME_PATH"] + '/'
 
+SHARED_DATA_PATH = '/srv/3d_conv_data/'
 #the training data directory
-TRAINING_DATASET_DIR = HOME_PATH + 'data/training_data/'
+TRAINING_DATASET_DIR = SHARED_DATA_PATH + 'training_data/'
 
 #the data used at runtime
-RUNTIME_DATASET_DIR = HOME_PATH + 'data/runtime_data/'
+RUNTIME_DATASET_DIR = SHARED_DATA_PATH + 'runtime_data/'
 
 #the results of running the runtime data through the
 #trained model

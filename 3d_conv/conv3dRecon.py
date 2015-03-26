@@ -20,271 +20,15 @@ from theano.tensor.nnet import conv
 from theano.tensor.nnet.conv3d2d import *
 
 from logistic_sgd import LogisticRegression
+from datasets.model_net_dataset import Model_Net_Dataset
 
-def relu(x):
-    return T.maximum(x, 0.0)
-
-def dropout(rng, values, p):
-    srng = theano.tensor.shared_randomstreams.RandomStreams(rng.randint(999999))
-    mask = srng.binomial(n=1, p=p, size=values.shape, dtype=theano.config.floatX)
-    output =  values * mask
-    return  numpy.cast[theano.config.floatX](1.0/p) * output
-
-
-class HiddenLayer(object):
-    def __init__(self, rng, input, n_in, n_out, drop, W=None, b=None,
-                 activation=T.tanh, p=0.5):
-        """
-        Typical hidden layer of a MLP: units are fully-connected and have
-        sigmoidal activation function. Weight matrix W is of shape (n_in,n_out)
-        and the bias vector b is of shape (n_out,).
-
-        NOTE : The nonlinearity used here is tanh
-
-        Hidden unit activation is given by: tanh(dot(input,W) + b)
-
-        :type rng: numpy.random.RandomState
-        :param rng: a random number generator used to initialize weights
-
-        :type input: theano.tensor.dmatrix
-        :param input: a symbolic tensor of shape (n_examples, n_in)
-
-        :type n_in: int
-        :param n_in: dimensionality of input
-
-        :type n_out: int
-        :param n_out: number of hidden units
-
-        :type activation: theano.Op or function
-        :param activation: Non linearity to be applied in the hidden
-                           layer
-        """
-        self.input = input
-        # end-snippet-1
-
-        # `W` is initialized with `W_values` which is uniformely sampled
-        # from sqrt(-6./(n_in+n_hidden)) and sqrt(6./(n_in+n_hidden))
-        # for tanh activation function
-        # the output of uniform if converted using asarray to dtype
-        # theano.config.floatX so that the code is runable on GPU
-        # Note : optimal initialization of weights is dependent on the
-        #        activation function used (among other things).
-        #        For example, results presented in [Xavier10] suggest that you
-        #        should use 4 times larger initial weights for sigmoid
-        #        compared to tanh
-        #        We have no info for other function, so we use the same as
-        #        tanh.
-        if W is None:
-            W_values = numpy.asarray(numpy.random.normal(loc=0., scale=.01, size=(n_in, n_out)), dtype=theano.config.floatX)
-
-            if activation == theano.tensor.nnet.sigmoid:
-                W_values *= 4
-
-            W = theano.shared(value=W_values, name='W', borrow=True)
-
-        if b is None:
-            b_values = numpy.ones((n_out,), dtype=theano.config.floatX)
-            b = theano.shared(value=b_values, name='b', borrow=True)
-
-        self.W = W
-        self.b = b
-
-        lin_output = T.dot(input, self.W) + self.b
-        output = activation(lin_output)
-        droppedOutput = dropout(rng, output, p)
-
-        self.output = T.switch(T.neq(drop, 0), droppedOutput, output)
-
-        # parameters of the model
-        self.params = [self.W, self.b]
-
-
-class ConvLayer3D(object):
-    """3D Layer of a convolutional network """
-
-    def __init__(self, rng, input, filter_shape, image_shape, drop, poolsize=(2, 2), p=0.5):
-        """
-        Allocate a layer with shared variable internal parameters.
-
-        :type rng: numpy.random.RandomState
-        :param rng: a random number generator used to initialize weights
-
-        :type input: theano.tensor.dtensor4
-        :param input: symbolic image tensor, of shape image_shape
-
-        :type filter_shape: tuple or list of length 4
-        :param filter_shape: (number of filters, num input feature maps,
-                              filter height, filter width)
-
-        :type image_shape: tuple or list of length 4
-        :param image_shape: (batch size, num input feature maps,
-                             image height, image width)
-
-        :type poolsize: tuple or list of length 2
-        :param poolsize: the downsampling (pooling) factor (#rows, #cols)
-        """
-
-        #assert image_shape[1] == filter_shape[1]
-        self.input = input
-
-        # there are "num input feature maps * filter height * filter width"
-        # inputs to each hidden unit
-        fan_in = numpy.prod(filter_shape[1:])
-        # each unit in the lower layer receives a gradient from:
-        # "num output feature maps * filter height * filter width" /
-        #   pooling size
-        fan_out = (filter_shape[0] * numpy.prod(filter_shape[2:]) /
-                   numpy.prod(poolsize))
-        # initialize weights with random weights
-        self.W = theano.shared(numpy.asarray(numpy.random.normal(loc=0., scale=.01, size=filter_shape), dtype=theano.config.floatX),
-            borrow=True)
-
-        # the bias is a 1D tensor -- one bias per output feature map
-        b_values = numpy.ones((filter_shape[0],), dtype=theano.config.floatX)
-        self.b = theano.shared(value=b_values, borrow=True)
-
-        # convolve input feature maps with filters
-        conv_out = conv3d(
-            signals=input,
-            filters=self.W,
-            signals_shape=image_shape,
-            filters_shape=filter_shape,
-            border_mode='valid'
-
-        )
-
-
-        """
-        # downsample each feature map individually, using maxpooling
-        pooled_out = downsample.max_pool_2d(
-            input=conv_out,
-            ds=poolsize,
-            ignore_border=True
-        )
-        """
-        # add the bias term. Since the bias is a vector (1D array), we first
-        # reshape it to a tensor of shape (1, n_filters, 1, 1). Each bias will
-        # thus be broadcasted across mini-batches and feature map
-        # width & height
-        out = relu(conv_out + self.b.dimshuffle('x', 'x', 0, 'x', 'x'))
-
-
-        droppedOutput = dropout(rng, out, p)
-
-        self.output = T.switch(T.neq(drop, 0), droppedOutput, out)
-
-        # store parameters of this layer
-        self.params = [self.W, self.b]
-
-
-def load_data(dataset):
-    ''' Loads the dataset
-
-    :type dataset: string
-    :param dataset: the path to the dataset (here MNIST)
-    '''
-
-    #############
-    # LOAD DATA #
-    #############
-
-    # Download the MNIST dataset if it is not present
-    data_dir, data_file = os.path.split(dataset)
-    if data_dir == "" and not os.path.isfile(dataset):
-        # Check if dataset is in the data directory.
-        new_path = os.path.join(
-            os.path.split(__file__)[0],
-            "..",
-            "data",
-            dataset
-        )
-        if os.path.isfile(new_path) or data_file == 'mnist.pkl.gz':
-            dataset = new_path
-
-    if (not os.path.isfile(dataset)) and data_file == 'mnist.pkl.gz':
-        import urllib
-        origin = (
-            'http://www.iro.umontreal.ca/~lisa/deep/data/mnist/mnist.pkl.gz'
-        )
-        print 'Downloading data from %s' % origin
-        urllib.urlretrieve(origin, dataset)
-
-    print '... loading data'
-
-    # Load the dataset
-    f = gzip.open(dataset, 'rb')
-    train_set, valid_set, test_set = cPickle.load(f)
-    f.close()
-
-    #train_set, valid_set, test_set format: tuple(input, target)
-    #input is an numpy.ndarray of 2 dimensions (a matrix)
-    #witch row's correspond to an example. target is a
-    #numpy.ndarray of 1 dimensions (vector)) that have the same length as
-    #the number of rows in the input. It should give the target
-    #target to the example with the same index in the input.
-
-
-
-   #A FUNCTION THAT RESIZES IMAGES FROM 28X28 TO 14X14
-    def resize(input):
-        numRows = input.shape[0]
-        newData = numpy.zeros((numRows, 2744))
-
-
-        for i in xrange(numRows):
-            a = numpy.reshape(input[i,:], (28,28))
-            newImage = scipy.misc.imresize(a,(14,14))
-            newData[i,1372:1568] = numpy.reshape(newImage, (1,196))
-        print "resized"
-
-        return newData
-
-
-
-    def shared_dataset(data_xy, borrow=True):
-        """ Function that loads the dataset into shared variables
-
-        The reason we store our dataset in shared variables is to allow
-        Theano to copy it into the GPU memory (when code is run on GPU).
-        Since copying data into the GPU is slow, copying a minibatch everytime
-        is needed (the default behaviour if the data is not in a shared
-        variable) would lead to a large decrease in performance.
-        """
-        olddata_x, data_y = data_xy
-
-        data_x = resize(olddata_x)
-
-        """
-        shared_x = theano.shared(numpy.asarray(data_x,
-                                               dtype=theano.config.floatX),
-                                 borrow=borrow)
-        shared_y = theano.shared(numpy.asarray(data_y,
-                                               dtype=theano.config.floatX),
-                                 borrow=borrow)
-                                 """
-        # When storing data on the GPU it has to be stored as floats
-        # therefore we will store the labels as ``floatX`` as well
-        # (``shared_y`` does exactly that). But during our computations
-        # we need them as ints (we use labels as index, and if they are
-        # floats it doesn't make sense) therefore instead of returning
-        # ``shared_y`` we will have to cast it to int. This little hack
-        # lets ous get around this issue
-        return data_x, data_y
-
-    test_set_x, test_set_y = shared_dataset(test_set)
-    valid_set_x, valid_set_y = shared_dataset(valid_set)
-    train_set_x, train_set_y = shared_dataset(train_set)
-
-    rval = [(train_set_x, train_set_y), (valid_set_x, valid_set_y),
-            (test_set_x, test_set_y)]
-    return rval
-
+from layers.hidden_layer import *
+from layers.conv_layer_3d import *
+from layers.layer_utils import *
 
 def evaluate(learning_rate=0.001, n_epochs=200,
-                    dataset='mnist.pkl.gz',
-                    nkerns=[20, 50], batch_size=30):
-    """ Demonstrates lenet on MNIST dataset
-
+                    nkerns=[20, 50], num_train_batches=30):
+    """
     :type learning_rate: float
     :param learning_rate: learning rate used (factor for the stochastic
                           gradient)
@@ -301,30 +45,25 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
     rng = numpy.random.RandomState(23455)
 
-    datasets = load_data(dataset)
-
-    train_set_x, train_set_y = datasets[0]
-    valid_set_x, valid_set_y = datasets[1]
-    test_set_x, test_set_y = datasets[2]
-
-    #print "train set shape "
-    #print train_set_x.shape
 
     # compute number of minibatches for training, validation and testing
-    n_train_batches = train_set_x.shape[0]
-    n_valid_batches = valid_set_x.shape[0]
-    n_test_batches = test_set_x.shape[0]
-    n_train_batches /= batch_size
-    n_valid_batches /= batch_size
-    n_test_batches /= batch_size
+    n_train_batches = 25
+    n_valid_batches = 25
+    n_test_batches = 25
+    batch_size = 1
 
-    # allocate symbolic variables for the data
-    index = T.lscalar()  # index to a [mini]batch
+    downsample_factor = 16
+    xdim = 256/downsample_factor
+    ydim = 256/downsample_factor
+    zdim = 256/downsample_factor
+    convsize = 3
 
     drop = T.iscalar('drop')
 
     # start-snippet-1
-    x = T.matrix('x')   # the data is presented as rasterized images
+    #x = T.matrix('x')   # the data is presented as rasterized images
+    dtensor5 = theano.tensor.TensorType('float32', (0,)*5)
+    x = dtensor5()
     y = T.ivector('y')  # the labels are presented as 1D vector of
                         # [int] labels
 
@@ -333,15 +72,10 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     ######################
     print '... building the model'
 
-    xdim = 14
-    ydim = 14
-    zdim = 14
-    convsize = 3
-
     # Reshape matrix of rasterized images of shape (batch_size, 28 * 28)
     # to a 4D tensor, compatible with our LeNetConvPoolLayer
     # (28, 28) is the size of MNIST images.
-    layer0_input = x.reshape((batch_size, zdim, 1, ydim, xdim))
+    #layer0_input = x.reshape((batch_size, zdim, 1, ydim, xdim))
 
 
     # Construct the first convolutional pooling layer:
@@ -350,10 +84,10 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     # 4D output tensor is thus of shape (batch_size, nkerns[0], 12, 12)
     layer0 = ConvLayer3D(
         rng,
-        input=layer0_input,
-        image_shape=(batch_size, zdim, 1, ydim, xdim),
+        input=x,
+        image_shape=(batch_size, zdim, 1, xdim, ydim),
         filter_shape=(nkerns[0], convsize, 1, convsize, convsize),
-        poolsize=(0,0), drop=drop
+        poolsize=(0, 0), drop=drop
     )
 
     # Construct the second convolutional pooling layer
@@ -367,7 +101,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         input=layer0.output,
         image_shape=(batch_size, newDimensions, nkerns[0], newDimensions, newDimensions),
         filter_shape=(nkerns[1], convsize, nkerns[0], convsize, convsize),
-        poolsize=(0,0), drop=drop
+        poolsize=(0, 0), drop=drop
     )
 
     # the HiddenLayer being fully-connected, it operates on 2D matrices of
@@ -404,7 +138,8 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         layer3.errors(y),
         givens={
             drop: numpy.cast['int32'](0)
-        }, allow_input_downcast=True    )
+        }, allow_input_downcast=True
+    )
 
     validate_model = theano.function(
         [x,y],
@@ -417,7 +152,6 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
     )
 
-
     # create a list of gradients for all model parameters
     grads = T.grad(cost, params)
 
@@ -428,7 +162,6 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     # (params[i], grads[i]) pairs.
 
 
-
     #RMSprop
     updates = []
     for p, g in zip(params, grads):
@@ -437,9 +170,6 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         g = g / T.sqrt(nextMeanSquare + 0.000001)
         updates.append((MeanSquare, nextMeanSquare))
         updates.append((p, p - learning_rate * g))
-
-
-
 
 
     train_model = theano.function(
@@ -454,9 +184,9 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     )
     # end-snippet-1
 
-    ###############
-    # TRAIN MODEL #
-    ###############
+    ###################
+    # TRAIN THE MODEL #
+    ###################
     print '... training'
     # early-stopping parameters
     patience = 10000  # look as this many examples regardless
@@ -475,37 +205,69 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     test_score = 0.
     start_time = time.clock()
 
-    epoch = 0
+    epoch_count = 0
     done_looping = False
 
 
-    while (epoch < n_epochs) and (not done_looping):
-        epoch = epoch + 1
-        for minibatch_index in xrange(n_train_batches):
+    while (epoch_count < n_epochs) and (not done_looping):
 
-            iter = (epoch - 1) * n_train_batches + minibatch_index
+        epoch_count += 1
 
-            if iter % 100 == 0:
-                print 'training @ iter = ', iter
-            xx= train_set_x[minibatch_index * batch_size: (minibatch_index + 1) * batch_size]
-            yy= train_set_y[minibatch_index * batch_size: (minibatch_index + 1) * batch_size]
+        models_dir = '/srv/3d_conv_data/ModelNet10'
+        patch_size = 256
 
-            cost_ij = train_model(xx,yy)
+        train_dataset = Model_Net_Dataset(models_dir, patch_size)
 
-            if (iter + 1) % validation_frequency == 0:
+
+        train_iterator = train_dataset.iterator(batch_size=batch_size,
+                                                num_batches=n_train_batches,
+                                                mode='even_shuffled_sequential')
+
+        for minibatch_index in xrange(num_train_batches):
+
+            mini_batch_count = (epoch_count - 1) * n_train_batches + minibatch_index
+
+            if mini_batch_count % 100 == 0:
+                print 'training @ iter = ', mini_batch_count
+
+            mini_batch_x, mini_batch_y = train_iterator.next()
+
+            mini_batch_x = downscale3d(mini_batch_x, downsample_factor)
+            mini_batch_y = downscale3d(mini_batch_y, downsample_factor)
+
+            mini_batch_y = mini_batch_y.flatten()
+
+            # import IPython
+            # IPython.embed()
+            # assert False
+            cost_ij = train_model(mini_batch_x, mini_batch_y)
+            print "got cost"
+
+            if (mini_batch_count + 1) % validation_frequency == 0:
+
+                validation_dataset = Model_Net_Dataset(models_dir, patch_size)
+
+                num_train_batches = 1
+                batch_size = 1
+
+                validation_iterator = validation_dataset.iterator(batch_size=batch_size,
+                                                                  num_batches=n_valid_batches,
+                                                                  mode='even_shuffled_sequential')
 
                 # compute zero-one loss on validation set
                 validation_losses = 0
                 for i in xrange(n_valid_batches):
-                    xx= valid_set_x[i * batch_size: (i + 1) * batch_size]
-                    yy= valid_set_y[i * batch_size: (i + 1) * batch_size]
+                    mini_batch_x, mini_batch_y = validation_iterator.next()
+                    #mini_batch_x= valid_set_x[i * num_train_batches: (i + 1) * num_train_batches]
+                    #mini_batch_y= valid_set_y[i * num_train_batches: (i + 1) * num_train_batches]
 
-                    validation_losses += validate_model(xx,yy)
+                    validation_losses += validate_model(mini_batch_x, mini_batch_y)
 
                 this_validation_loss = validation_losses/n_valid_batches
+
                 print "training cost: ", cost_ij
                 print('epoch %i, minibatch %i/%i, validation error %f %%' %
-                      (epoch, minibatch_index + 1, n_train_batches,
+                      (epoch_count, minibatch_index + 1, n_train_batches,
                        this_validation_loss * 100.))
 
                 # if we got the best validation score until now
@@ -514,32 +276,35 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                     #improve patience if loss improvement is good enough
                     if this_validation_loss < best_validation_loss *  \
                        improvement_threshold:
-                        patience = max(patience, iter * patience_increase)
+                        patience = max(patience, mini_batch_count * patience_increase)
 
                     # save best validation score and iteration number
                     best_validation_loss = this_validation_loss
-                    best_iter = iter
+                    best_iter = mini_batch_count
 
                     # test it on the test set
                     test_losses = 0
-                    for i in xrange(n_test_batches):
-                        xx= test_set_x[i * batch_size: (i + 1) * batch_size]
-                        yy= test_set_y[i * batch_size: (i + 1) * batch_size]
 
+                    models_dir = '/srv/3d_conv_data/ModelNet10'
+                    patch_size = 256
 
-                        test_losses += test_model(xx,yy)
+                    test_dataset = Model_Net_Dataset(models_dir, patch_size)
 
-                    test_score = test_losses/n_test_batches
+                    test_iterator = test_dataset.iterator(batch_size=batch_size,
+                                                      num_batches=n_test_batches,
+                                                      mode='even_shuffled_sequential')
 
-
+                    for batch_x, batch_y in test_iterator.next():
+                        test_losses += test_model(batch_x, batch_y)
+                        test_score = test_losses/n_test_batches
 
                     print(('     epoch %i, minibatch %i/%i, test error of '
                            'best model %f %%') %
-                          (epoch, minibatch_index + 1, n_train_batches,
+                          (epoch_count, minibatch_index + 1, n_train_batches,
                            test_score * 100.))
 
 
-            if patience <= iter:
+            if patience <= mini_batch_count:
                 done_looping = True
                 break
 
@@ -553,7 +318,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                           ' ran for %.2fm' % ((end_time - start_time) / 60.))
 
 if __name__ == '__main__':
-    evaluate_lenet5()
+    evaluate()
 
 
 def experiment(state, channel):

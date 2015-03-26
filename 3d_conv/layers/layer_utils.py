@@ -8,8 +8,8 @@ def relu(x):
 def dropout(rng, values, p):
     srng = theano.tensor.shared_randomstreams.RandomStreams(rng.randint(999999))
     mask = srng.binomial(n=1, p=p, size=values.shape, dtype=theano.config.floatX)
-    output =  values * mask
-    return  numpy.cast[theano.config.floatX](1.0/p) * output
+    output = values * mask
+    return numpy.cast[theano.config.floatX](1.0/p) * output
 
 """
 Downscales a 3d layer (represented as a 5d BZCXY array) by the same downscale_factor in each dimension. Assumes that each of
