@@ -230,7 +230,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                                                 num_batches=n_train_batches,
                                                 mode='even_shuffled_sequential')
 
-        for minibatch_index in xrange(num_train_batches):
+        for minibatch_index in xrange(n_train_batches):
 
             mini_batch_count = (epoch_count - 1) * n_train_batches + minibatch_index
 
@@ -248,14 +248,10 @@ def evaluate(learning_rate=0.001, n_epochs=200,
             # IPython.embed()
             # assert False
             cost_ij = train_model(mini_batch_x, mini_batch_y)
-            print "got cost"
 
             if (mini_batch_count + 1) % validation_frequency == 0:
 
                 validation_dataset = Model_Net_Dataset(models_dir, patch_size)
-
-                num_train_batches = 1
-                batch_size = 1
 
                 validation_iterator = validation_dataset.iterator(batch_size=batch_size,
                                                                   num_batches=n_valid_batches,
@@ -265,8 +261,10 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                 validation_losses = 0
                 for i in xrange(n_valid_batches):
                     mini_batch_x, mini_batch_y = validation_iterator.next()
-                    #mini_batch_x= valid_set_x[i * num_train_batches: (i + 1) * num_train_batches]
-                    #mini_batch_y= valid_set_y[i * num_train_batches: (i + 1) * num_train_batches]
+                    mini_batch_x = downscale3d(mini_batch_x, downsample_factor)
+                    mini_batch_y = downscale3d(mini_batch_y, downsample_factor)
+
+                    mini_batch_y = mini_batch_y.flatten()
 
                     validation_losses += validate_model(mini_batch_x, mini_batch_y)
 
@@ -301,7 +299,12 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                                                       num_batches=n_test_batches,
                                                       mode='even_shuffled_sequential')
 
-                    for batch_x, batch_y in test_iterator.next():
+                    for j in xrange(n_test_batches):
+                        batch_x, batch_y = test_iterator.next()
+                        batch_x = downscale3d(batch_x, downsample_factor)
+                        batch_y = downscale3d(batch_y, downsample_factor)
+
+                        batch_y = batch_y.flatten()
                         test_losses += test_model(batch_x, batch_y)
                         test_score = test_losses/n_test_batches
 
