@@ -97,8 +97,8 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     # 4D output tensor is thus of shape (nkerns[0], nkerns[1], 4, 4)
 
     newZ = zdim - convsize + 1
-    newX = zdim - convsize + 1
-    newY = zdim - convsize + 1
+    newX = xdim - convsize + 1
+    newY = ydim - convsize + 1
 
 
     layer1 = ConvLayer3D(
