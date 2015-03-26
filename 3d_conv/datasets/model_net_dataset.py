@@ -114,8 +114,8 @@ class Model_Net_Iterator():
 
         patch_size = self.dataset.patch_size
 
-        batch_x = np.zeros((batch_size, patch_size, patch_size, patch_size, 1))
-        batch_y = np.zeros((batch_size, patch_size, patch_size, patch_size, 1))
+        batch_x = np.zeros((batch_size, patch_size/2, patch_size, patch_size, 1))
+        batch_y = np.zeros((batch_size, patch_size/2, patch_size, patch_size, 1))
 
         for i in range(len(batch_indices)):
             index = batch_indices[i]
@@ -124,11 +124,11 @@ class Model_Net_Iterator():
             with open(model_filepath, 'rb') as f:
                 model = binvox_rw.read_as_3d_array(f)
 
-            batch_x[i, :, :, :, 0] = np.copy(np.zeros(model.data.shape))
-            batch_y[i, :, :, :, 0] = np.copy(np.zeros(model.data.shape))
-
-            batch_x[i, :, :, :, 0][model.data] = 1
-            batch_y[i, :, :, :, 0][model.data] = 1
+            #batch_x[i, :, :, :, 0] = np.copy(np.zeros(model.data.shape))
+            #batch_y[i, :, :, :, 0] = np.copy(np.zeros(model.data.shape))
+            
+            batch_x[i, :, :, :, 0][model.data[:patch_size/2, : ,:]] = 1
+            batch_y[i, :, :, :, 0][model.data[patch_size/2:, :, :]] = 1
 
         #make batch C01B rather than B01C
         batch_x = batch_x.transpose(0, 3, 4, 1, 2)
