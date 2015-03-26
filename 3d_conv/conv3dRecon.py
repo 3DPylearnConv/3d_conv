@@ -28,7 +28,7 @@ from layers.layer_utils import *
 from layers.reconLayer import *
 
 def evaluate(learning_rate=0.001, n_epochs=200,
-                    nkerns=[20, 50], num_train_batches=30):
+                    nkerns=[10, 25], num_train_batches=30):
     """
     :type learning_rate: float
     :param learning_rate: learning rate used (factor for the stochastic
@@ -118,7 +118,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         rng,
         input=layer2_input,
         n_in=nkerns[1] * finalDimensions * finalDimensions * finalDimensions,
-        n_out=1200,
+        n_out=1000,
         activation=relu, drop=drop
     )
 
@@ -126,7 +126,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     layer3 = ReconLayer(
         rng,
         input=layer2.output,
-        n_in=1200,
+        n_in=1000,
         n_out=xdim*zdim*ydim * batch_size,
         activation=T.nnet.sigmoid
     )
@@ -157,6 +157,13 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
         }, allow_input_downcast=True
 
+    )
+
+
+    demonstrate_model = theano.function(
+        [x,y],
+        layer3.return_output(),
+        givens={drop: numpy.cast['int32'](0)}, on_unused_input='ignore'
     )
 
     # create a list of gradients for all model parameters
@@ -274,6 +281,13 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                 print('epoch %i, minibatch %i/%i, validation error %f %%' %
                       (epoch_count, minibatch_index + 1, n_train_batches,
                        this_validation_loss * 100.))
+
+                #*****
+                # get 1 example for demonstrating the model:
+                #demo_x, demo_y =
+
+                image = demonstrate_model(demo_x, demo_y)
+                #display or save image data
 
                 # if we got the best validation score until now
                 if this_validation_loss < best_validation_loss:
