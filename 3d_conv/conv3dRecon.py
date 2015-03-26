@@ -133,7 +133,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         rng,
         input=layer2.output,
         n_in=1000,
-        n_out=newX*newY*newZ * batch_size,
+        n_out= xdim * zdim * ydim * batch_size,
         activation=T.nnet.sigmoid
     )
 
