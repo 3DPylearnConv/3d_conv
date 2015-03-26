@@ -11,9 +11,13 @@ def dropout(rng, values, p):
     output =  values * mask
     return  numpy.cast[theano.config.floatX](1.0/p) * output
 
-def downscale3d(the_3d_array, downscale_factor):
-    array_shape = the_3d_array.shape
-    return np.round(the_3d_array.reshape(array_shape[0], \
+"""
+Downscales a 3d layer (represented as a 5d BZCXY array) by the same downscale_factor in each dimension. Assumes that each of
+the 3 spatial dimensions has size divisible by the downscale factor.
+"""
+def downscale3d(the_5d_input, downscale_factor):
+    array_shape = the_5d_input.shape
+    return numpy.round(the_5d_input.reshape(array_shape[0], \
                                          array_shape[1]/downscale_factor, \
                                          downscale_factor, \
                                          array_shape[2], \
