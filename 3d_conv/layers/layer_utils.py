@@ -12,7 +12,7 @@ def dropout(rng, values, p):
     srng = theano.tensor.shared_randomstreams.RandomStreams(rng.randint(999999))
     mask = srng.binomial(n=1, p=p, size=values.shape, dtype=theano.config.floatX)
     output = values * mask
-    return numpy.cast[theano.config.floatX](1.0 / p) * output
+    return numpy.cast[theano.config.floatX](1.0/p) * output
 
 
 def downscale_3d(the_5d_input, downscale_factor):

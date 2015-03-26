@@ -10,8 +10,9 @@ import pylearn2.utils.rng
 from pylearn2.utils.iteration import SubsetIterator, resolve_iterator_class
 from pylearn2.utils import safe_izip, wraps
 import os
-from off_utils.off_handler import OffHandler
-from datasets.point_cloud_hdf5_dataset import create_voxel_grid_around_point
+#from off_utils.off_handler import OffHandler
+#from datasets.point_cloud_hdf5_dataset import create_voxel_grid_around_point
+import binvox_rw
 
 
 class Model_Net_Dataset(pylearn2.datasets.dataset.Dataset):
@@ -22,8 +23,9 @@ class Model_Net_Dataset(pylearn2.datasets.dataset.Dataset):
         categories = [d for d in os.listdir(models_dir) if os.path.isdir(os.path.join(models_dir, d))]
         self.examples = []
         for category in categories:
-            for off_file in os.listdir(models_dir + '/' + category + '/test/'):
-                self.examples.append((models_dir + '/' + category + '/test/' + off_file, category))
+            for file_name in os.listdir(models_dir + '/' + category + '/test/'):
+                if ".binvox" in file_name:
+                    self.examples.append((models_dir + '/' + category + '/test/' + file_name, category))
 
     def adjust_for_viewer(self, X):
         raise NotImplementedError
@@ -118,24 +120,19 @@ class Model_Net_Iterator():
         for i in range(len(batch_indices)):
             index = batch_indices[i]
             model_filepath = self.dataset.examples[index][0]
-            off_handler = OffHandler()
-            off_handler.read(model_filepath)
-            points = off_handler.vertices
-            points_array = np.zeros((len(points), 3, 1))
-            points_array[:, :, 0]
-            occupancy_grid = create_voxel_grid_around_point(np.array(points),
-                                                            patch_center=(0, 0, 0),
-                                                            voxel_resolution=0.1,
-                                                            num_voxels_per_dim=patch_size)
 
-            partial_occupancy_grid = np.zeros_like(occupancy_grid)
-            partial_occupancy_grid[:, :, 0:patch_size/2, :] = np.copy(occupancy_grid[:, :, 0:patch_size/2, :])
+            with open(model_filepath, 'rb') as f:
+                model = binvox_rw.read_as_3d_array(f)
 
-            batch_x[i] = occupancy_grid
-            batch_y[i] = partial_occupancy_grid
+            batch_x[i, :, :, :, 0] = np.copy(np.zeros(model.data.shape))
+            batch_y[i, :, :, :, 0] = np.copy(np.zeros(model.data.shape))
+
+            batch_x[i, :, :, :, 0][model.data] = 1
+            batch_y[i, :, :, :, 0][model.data] = 1
 
         #make batch C01B rather than B01C
         batch_x = batch_x.transpose(0, 3, 4, 1, 2)
+        batch_y = batch_y.transpose(0, 3, 4, 1, 2)
 
         #apply post processors to the patches
         for post_processor in self.iterator_post_processors:

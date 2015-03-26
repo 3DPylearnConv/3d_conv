@@ -11,7 +11,7 @@ class TestRGBDDataset(unittest.TestCase):
 
     def setUp(self):
 
-        self.hdf5_filepath = os.getenv('HOME_PATH') + '/data/training_data/contact_and_potential_grasps_small.h5'
+        self.hdf5_filepath = '/srv/3d_conv_data/training_data/contact_and_potential_grasps_small.h5'
         self.topo_view_key = 'rgbd'
         self.y_key = 'grasp_type'
         self.patch_size = 72
