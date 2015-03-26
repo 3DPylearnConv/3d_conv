@@ -48,12 +48,12 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
 
     # compute number of minibatches for training, validation and testing
-    n_train_batches = 25
-    n_valid_batches = 25
-    n_test_batches = 25
+    n_train_batches = 2
+    n_valid_batches = 2
+    n_test_batches = 2
     batch_size = 1
 
-    downsample_factor = 16
+    downsample_factor = 8
     xdim = 256/downsample_factor
     ydim = 256/downsample_factor
     zdim = 256/downsample_factor
@@ -127,7 +127,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         rng,
         input=layer2.output,
         n_in=1200,
-        n_out=xdim*zdim*ydim,
+        n_out=xdim*zdim*ydim * batch_size,
         activation=T.nnet.sigmoid
     )
 
@@ -261,8 +261,8 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                 validation_losses = 0
                 for i in xrange(n_valid_batches):
                     mini_batch_x, mini_batch_y = validation_iterator.next()
-                    mini_batch_x = downscale3d(mini_batch_x, downsample_factor)
-                    mini_batch_y = downscale3d(mini_batch_y, downsample_factor)
+                    mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
+                    mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
 
                     mini_batch_y = mini_batch_y.flatten()
 
@@ -291,7 +291,6 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                     test_losses = 0
 
                     models_dir = '/srv/3d_conv_data/ModelNet10'
-                    patch_size = 256
 
                     test_dataset = Model_Net_Dataset(models_dir, patch_size)
 
@@ -301,8 +300,8 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
                     for j in xrange(n_test_batches):
                         batch_x, batch_y = test_iterator.next()
-                        batch_x = downscale3d(batch_x, downsample_factor)
-                        batch_y = downscale3d(batch_y, downsample_factor)
+                        batch_x = downscale_3d(batch_x, downsample_factor)
+                        batch_y = downscale_3d(batch_y, downsample_factor)
 
                         batch_y = batch_y.flatten()
                         test_losses += test_model(batch_x, batch_y)
