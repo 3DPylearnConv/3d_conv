@@ -9,7 +9,7 @@ import theano
 import theano.tensor as T
 
 from models.conv_hidden_recon_model_config import ConvHiddenReconModelConfig
-from datasets.model_net_dataset import Model_Net_Dataset
+from datasets.model_net_dataset import ModelNetDataset
 
 from visualization.visualize import *
 
@@ -161,7 +161,7 @@ def train(model,
                         test_losses += model.test(mini_batch_x, mini_batch_y)
                         test_score = test_losses/n_test_batches
 
-                    print(('     epoch %i, minibatch %i/%i, test error of '
+                    print(('epoch %i, minibatch %i/%i, test error of '
                            'best model %f %%') %
                           (epoch_count, minibatch_index + 1, n_train_batches,
                            test_score * 100.))
@@ -185,9 +185,9 @@ if __name__ == "__main__":
 
     models_dir = '/srv/3d_conv_data/ModelNet10'
 
-    train_dataset = Model_Net_Dataset(models_dir, patch_size, dataset_type='train')
-    test_dataset = Model_Net_Dataset(models_dir, patch_size, dataset_type='test')
-    validation_dataset = Model_Net_Dataset(models_dir, patch_size, dataset_type='valid')
+    train_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='train')
+    test_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='test')
+    validation_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='valid')
 
     model_config = ConvHiddenReconModelConfig(downsample_factor=downsample_factor,
                                               xdim=xdim,
@@ -195,5 +195,6 @@ if __name__ == "__main__":
                                               zdim=zdim)
 
     model = model_config.build_model()
+
 
     train(model, train_dataset, test_dataset, validation_dataset)
