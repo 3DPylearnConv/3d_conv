@@ -125,11 +125,12 @@ class ModelBuilder():
 
         )
 
-        demonstrate_model = theano.function(
+        demonstrate_model = None
+        """theano.function(
             [x, y],
             self.layers[-1].return_output(),
             givens={self.drop: numpy.cast['int32'](0)}, on_unused_input='ignore'
-        )
+        )"""
 
         # create a list of gradients for all model parameters
         grads = T.grad(cost, params)
