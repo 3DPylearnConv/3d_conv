@@ -27,7 +27,7 @@ from visualization.visualize import *
 from layers.hidden_layer import *
 from layers.conv_layer_3d import *
 from layers.layer_utils import *
-from layers.reconLayer import *
+from layers.recon_layer import *
 
 def evaluate(learning_rate=0.001, n_epochs=200,
                     nkerns=[12, 25], num_train_batches=30):
