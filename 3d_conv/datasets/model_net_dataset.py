@@ -217,7 +217,7 @@ class ModelNetIteratorClassifier(Model_Net_Iterator):
             #batch_y[i, :, :, :, 0] = np.copy(np.zeros(model.data.shape))
 
             batch_x[i, :, :, :, 0][model.data[:, : ,:]] = 1
-            batch_y[i]=[categories.index(category)]
+            batch_y[i]=categories.index(category)
 
         #make batch C01B rather than B01C
         batch_x = batch_x.transpose(0, 3, 4, 1, 2)
