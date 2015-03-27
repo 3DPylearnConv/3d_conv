@@ -4,6 +4,7 @@ import theano.tensor as T
 from layers.layer_utils import *
 
 class HiddenLayer(object):
+
     def __init__(self, rng, input, n_in, n_out, drop, W=None, b=None,
                  activation=T.tanh, p=0.5):
         """

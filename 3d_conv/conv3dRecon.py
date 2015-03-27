@@ -49,10 +49,10 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
 
     # compute number of minibatches for training, validation and testing
-    n_train_batches = 2
-    n_valid_batches = 2
-    n_test_batches = 2
-    batch_size = 1
+    n_train_batches = 20
+    n_valid_batches = 5
+    n_test_batches = 5
+    batch_size = 10
 
     downsample_factor = 16
     xdim = 256/2/downsample_factor
@@ -229,15 +229,17 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     epoch_count = 0
     done_looping = False
 
+    models_dir = '/srv/3d_conv_data/ModelNet10'
+    patch_size = 256
+
+    train_dataset = Model_Net_Dataset(models_dir, patch_size, dataset_type='train')
+    test_dataset = Model_Net_Dataset(models_dir, patch_size, dataset_type='test')
+    validation_dataset = Model_Net_Dataset(models_dir, patch_size, dataset_type='valid')
+
 
     while (epoch_count < n_epochs) and (not done_looping):
 
         epoch_count += 1
-
-        models_dir = '/srv/3d_conv_data/ModelNet10'
-        patch_size = 256
-
-        train_dataset = Model_Net_Dataset(models_dir, patch_size, dataset_type='train')
 
 
         train_iterator = train_dataset.iterator(batch_size=batch_size,
@@ -258,14 +260,9 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
             mini_batch_y = mini_batch_y.flatten()
 
-            # import IPython
-            # IPython.embed()
-            # assert False
             cost_ij = train_model(mini_batch_x, mini_batch_y)
 
             if (mini_batch_count + 1) % validation_frequency == 0:
-
-                validation_dataset = Model_Net_Dataset(models_dir, patch_size, dataset_type='valid')
 
                 validation_iterator = validation_dataset.iterator(batch_size=batch_size,
                                                                   num_batches=n_valid_batches,
@@ -310,10 +307,6 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
                     # test it on the test set
                     test_losses = 0
-
-                    models_dir = '/srv/3d_conv_data/ModelNet10'
-
-                    test_dataset = Model_Net_Dataset(models_dir, patch_size, dataset_type='test')
 
                     test_iterator = test_dataset.iterator(batch_size=batch_size,
                                                       num_batches=n_test_batches,
