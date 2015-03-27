@@ -17,6 +17,7 @@ from layers.hidden_layer import *
 from layers.conv_layer_3d import *
 from layers.layer_utils import *
 from layers.recon_layer import *
+from models.conv_hidden_classifier import *
 
 ########################################
 #Settings
