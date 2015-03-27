@@ -22,6 +22,7 @@ from theano.tensor.nnet.conv3d2d import *
 
 from logistic_sgd import LogisticRegression
 from datasets.model_net_dataset import Model_Net_Dataset
+from visualization.visualize import *
 
 from layers.hidden_layer import *
 from layers.conv_layer_3d import *
@@ -295,8 +296,14 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
                 # get 1 example for demonstrating the model:
 
-                #image = demonstrate_model(demo_x, demo_y)
-                #display or save image data
+                results = demonstrate_model(demo_x, demo_y)
+
+                image = results[0]
+                numpy.reshape(image, (8, 16, 16))
+                visualize_batch_x(demo_x)
+                visualize_3d(image)
+                visualize_3d(demo_y[0])
+
 
 
 
