@@ -149,7 +149,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     # create a function to compute the mistakes that are made by the model
     test_model = theano.function(
         [x,y],
-        layer3.errors(y),
+        cost,
         givens={
             drop: numpy.cast['int32'](0)
         }, allow_input_downcast=True
@@ -157,7 +157,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
     validate_model = theano.function(
         [x,y],
-        layer3.errors(y),
+        cost,
         givens={
 
             drop: numpy.cast['int32'](0)
@@ -273,6 +273,9 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
                 # compute zero-one loss on validation set
                 validation_losses = 0
+
+                demo_x = 0
+                demo_y = 0
                 for i in xrange(n_valid_batches):
                     mini_batch_x, mini_batch_y = validation_iterator.next()
                     mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
@@ -281,6 +284,9 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                     mini_batch_y = mini_batch_y.flatten()
 
                     validation_losses += validate_model(mini_batch_x, mini_batch_y)
+                    if i == 0:
+                        demo_x = mini_batch_x
+                        demo_y = mini_batch_y
 
                 this_validation_loss = validation_losses/n_valid_batches
 
@@ -289,12 +295,13 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                       (epoch_count, minibatch_index + 1, n_train_batches,
                        this_validation_loss * 100.))
 
-                #*****
+
                 # get 1 example for demonstrating the model:
-                #demo_x, demo_y =
 
                 #image = demonstrate_model(demo_x, demo_y)
                 #display or save image data
+
+
 
                 # if we got the best validation score until now
                 if this_validation_loss < best_validation_loss:
