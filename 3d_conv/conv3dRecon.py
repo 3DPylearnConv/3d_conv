@@ -236,7 +236,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         models_dir = '/srv/3d_conv_data/ModelNet10'
         patch_size = 256
 
-        train_dataset = Model_Net_Dataset(models_dir, patch_size)
+        train_dataset = Model_Net_Dataset(models_dir, patch_size, dataset_type='train')
 
 
         train_iterator = train_dataset.iterator(batch_size=batch_size,
@@ -264,7 +264,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
             if (mini_batch_count + 1) % validation_frequency == 0:
 
-                validation_dataset = Model_Net_Dataset(models_dir, patch_size)
+                validation_dataset = Model_Net_Dataset(models_dir, patch_size, dataset_type='valid')
 
                 validation_iterator = validation_dataset.iterator(batch_size=batch_size,
                                                                   num_batches=n_valid_batches,
@@ -292,7 +292,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                 # get 1 example for demonstrating the model:
                 #demo_x, demo_y =
 
-                image = demonstrate_model(demo_x, demo_y)
+                #image = demonstrate_model(demo_x, demo_y)
                 #display or save image data
 
                 # if we got the best validation score until now
@@ -312,7 +312,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
                     models_dir = '/srv/3d_conv_data/ModelNet10'
 
-                    test_dataset = Model_Net_Dataset(models_dir, patch_size)
+                    test_dataset = Model_Net_Dataset(models_dir, patch_size, dataset_type='test')
 
                     test_iterator = test_dataset.iterator(batch_size=batch_size,
                                                       num_batches=n_test_batches,

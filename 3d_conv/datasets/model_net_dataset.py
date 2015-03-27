@@ -17,15 +17,19 @@ import binvox_rw
 
 class Model_Net_Dataset(pylearn2.datasets.dataset.Dataset):
 
-    def __init__(self, models_dir, patch_size=100):
+    def __init__(self, models_dir, patch_size=100, dataset_type='train'):
+        if dataset_type == 'valid':
+            dataset_type = 'test'
+
         self.patch_size = patch_size
 
         categories = [d for d in os.listdir(models_dir) if os.path.isdir(os.path.join(models_dir, d))]
         self.examples = []
+        subdir = '/' + dataset_type + '/'
         for category in categories:
-            for file_name in os.listdir(models_dir + '/' + category + '/test/'):
+            for file_name in os.listdir(models_dir + '/' + category + subdir):
                 if ".binvox" in file_name:
-                    self.examples.append((models_dir + '/' + category + '/test/' + file_name, category))
+                    self.examples.append((models_dir + '/' + category + subdir + file_name, category))
 
     def adjust_for_viewer(self, X):
         raise NotImplementedError
