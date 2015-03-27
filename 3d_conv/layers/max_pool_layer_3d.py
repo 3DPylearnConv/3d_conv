@@ -4,6 +4,7 @@ from theano.tensor.signal.downsample import *
 from layers.layer_utils import *
 from layers.layer import Layer
 
+
 class ConvLayer3D(Layer):
     """3D Layer of a convolutional network """
 
