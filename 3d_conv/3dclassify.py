@@ -234,7 +234,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
         train_iterator = train_dataset.iterator(batch_size=batch_size,
                                                 num_batches=n_train_batches,
-                                                mode='even_shuffled_sequential')
+                                                mode='even_shuffled_sequential', type='classify')
 
         for minibatch_index in xrange(n_train_batches):
 
@@ -253,7 +253,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
                 validation_iterator = validation_dataset.iterator(batch_size=batch_size,
                                                                   num_batches=n_valid_batches,
-                                                                  mode='even_shuffled_sequential')
+                                                                  mode='even_shuffled_sequential', type = 'classify')
 
                 # compute zero-one loss on validation set
                 validation_losses = 0
@@ -280,15 +280,6 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
                 # get 1 example for demonstrating the model:
 
-                results = demonstrate_model(demo_x, demo_y)
-
-                image = results[0]
-
-                image = numpy.reshape(image, (8, 16, 16))
-
-                visualize_batch_x(demo_x)
-                visualize_3d(image)
-                visualize_3d(numpy.reshape(demo_y[0], (8,16,16)))
 
 
 
@@ -310,7 +301,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
                     test_iterator = test_dataset.iterator(batch_size=batch_size,
                                                       num_batches=n_test_batches,
-                                                      mode='even_shuffled_sequential')
+                                                      mode='even_shuffled_sequential', type='classify')
 
                     for j in xrange(n_test_batches):
                         batch_x, batch_y = test_iterator.next(categories)
