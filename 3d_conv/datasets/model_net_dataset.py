@@ -23,10 +23,10 @@ class Model_Net_Dataset(pylearn2.datasets.dataset.Dataset):
 
         self.patch_size = patch_size
 
-        categories = [d for d in os.listdir(models_dir) if os.path.isdir(os.path.join(models_dir, d))]
+        self.categories = [d for d in os.listdir(models_dir) if os.path.isdir(os.path.join(models_dir, d))]
         self.examples = []
         subdir = '/' + dataset_type + '/'
-        for category in categories:
+        for category in self.categories:
             for file_name in os.listdir(models_dir + '/' + category + subdir):
                 if ".binvox" in file_name:
                     self.examples.append((models_dir + '/' + category + subdir + file_name, category))
@@ -43,14 +43,24 @@ class Model_Net_Dataset(pylearn2.datasets.dataset.Dataset):
     def has_targets(self):
         return True
 
+    def get_categories(self):
+        return self.categories
+
+
     def iterator(self, mode=None, batch_size=None, num_batches=None,
                  topo=None, targets=None, rng=None, data_specs=None,
-                 return_tuple=False):
+                 return_tuple=False, type="default"):
+        if type == "default":
 
-        return Model_Net_Iterator(self,
-                             batch_size=batch_size,
-                             num_batches=num_batches,
-                             mode=mode)
+            return Model_Net_Iterator(self,
+                                 batch_size=batch_size,
+                                 num_batches=num_batches,
+                                 mode=mode)
+        else:
+            return ModelNetIteratorClassifier(self,
+                     batch_size=batch_size,
+                     num_batches=num_batches,
+                     mode=mode)
 
 
 class Model_Net_Iterator():
@@ -130,7 +140,7 @@ class Model_Net_Iterator():
 
             #batch_x[i, :, :, :, 0] = np.copy(np.zeros(model.data.shape))
             #batch_y[i, :, :, :, 0] = np.copy(np.zeros(model.data.shape))
-            
+
             batch_x[i, :, :, :, 0][model.data[:patch_size/2, : ,:]] = 1
             batch_y[i, :, :, :, 0][model.data[patch_size/2:, :, :]] = 1
 
@@ -172,4 +182,51 @@ class Model_Net_Iterator():
     def stochastic(self):
         return self._subset_iterator.stochastic
 
+class ModelNetIteratorClassifier(Model_Net_Iterator):
 
+    def next(self, categories):
+
+        batch_indices = self._subset_iterator.next()
+
+        if isinstance(batch_indices, slice):
+            batch_indices = np.array(range(batch_indices.start, batch_indices.stop))
+
+        # if we are using a shuffled sequential subset iterator
+        # then next_index will be something like:
+        # array([13713, 14644, 30532, 32127, 35746, 44163, 48490, 49363, 52141, 52216])
+        # hdf5 can only support this sort of indexing if the array elements are
+        # in increasing order
+        batch_size = 0
+        if isinstance(batch_indices, np.ndarray):
+            batch_indices.sort()
+            batch_size = len(batch_indices)
+
+        patch_size = self.dataset.patch_size
+
+        batch_x = np.zeros((batch_size, patch_size/2, patch_size, patch_size, 1))
+        batch_y = np.zeros((batch_size,))
+
+        for i in range(len(batch_indices)):
+            index = batch_indices[i]
+            model_filepath, category = self.dataset.examples[index]
+
+            with open(model_filepath, 'rb') as f:
+                model = binvox_rw.read_as_3d_array(f)
+
+            #batch_x[i, :, :, :, 0] = np.copy(np.zeros(model.data.shape))
+            #batch_y[i, :, :, :, 0] = np.copy(np.zeros(model.data.shape))
+
+            batch_x[i, :, :, :, 0][model.data[:, : ,:]] = 1
+            batch_y[i] = categories.index(category)
+
+        #make batch C01B rather than B01C
+        batch_x = batch_x.transpose(0, 3, 4, 1, 2)
+
+        #apply post processors to the patches
+        for post_processor in self.iterator_post_processors:
+            batch_x = post_processor.apply(batch_x)
+
+        batch_x = np.array(batch_x, dtype=np.float32)
+        batch_y = np.array(batch_y, dtype=np.int32)
+
+        return batch_x, batch_y
