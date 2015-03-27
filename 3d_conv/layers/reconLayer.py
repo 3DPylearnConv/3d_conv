@@ -32,6 +32,7 @@ class ReconLayer(object):
         self.params = [self.W, self.b]
 
     def cross_entropy_error(self, y):
+        # return T.mean(T.nnet.categorical_crossentropy(self.output, y))
         L = - T.sum(y* T.log(self.output) + (1 - y) * T.log(1 - self.output), axis=1)
         cost = T.mean(L)
         return cost

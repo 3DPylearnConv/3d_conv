@@ -1,5 +1,6 @@
 """
-Modified version of deeplearning.net tutorial for 3d data
+Shape Reconstruction
+Modified version of deeplearning.net tutorial for 3d data.
 """
 import cPickle
 import gzip
