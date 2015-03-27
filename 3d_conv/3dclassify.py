@@ -162,13 +162,6 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     )
 
 
-    demonstrate_model = theano.function(
-        [x,y],
-        layer3.return_output(),
-        givens={drop: numpy.cast['int32'](0)}, on_unused_input='ignore',
-        allow_input_downcast=True
-    )
-
     # create a list of gradients for all model parameters
     grads = T.grad(cost, params)
 
