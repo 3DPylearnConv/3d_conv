@@ -126,7 +126,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         rng,
         input=layer2_input,
         n_in=nkerns[1] * newZ * newX * newY,
-        n_out=1100,
+        n_out=1000,
         activation=relu, drop=drop
     )
 
