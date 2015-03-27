@@ -82,14 +82,13 @@ class ModelBuilder():
 
         self.layers.append(layer)
 
-    def build_model(self):
+    def build_model(self, y):
 
         params = []
         for layer in self.layers:
             params += layer.params
 
         x = self.layers[0].input
-        y = T.ivector('y')
 
         # the cost we minimize during training is the NLL of the model
         cost = self.layers[-1].cross_entropy_error(y)

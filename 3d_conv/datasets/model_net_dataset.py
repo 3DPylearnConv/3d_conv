@@ -51,7 +51,6 @@ class Model_Net_Dataset(pylearn2.datasets.dataset.Dataset):
                  topo=None, targets=None, rng=None, data_specs=None,
                  return_tuple=False, type="default"):
         if type == "default":
-
             return Model_Net_Iterator(self,
                                  batch_size=batch_size,
                                  num_batches=num_batches,

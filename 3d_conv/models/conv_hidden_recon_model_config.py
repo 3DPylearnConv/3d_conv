@@ -44,6 +44,9 @@ class ConvHiddenReconModelConfig():
 
     def build_model(self):
 
+        y = T.matrix('y')   # the labels are presented as 1D vector of
+                        # [int] labels
+
         mb = ModelBuilder(self.input_shape)
 
         #add convolutional layers
@@ -70,7 +73,7 @@ class ConvHiddenReconModelConfig():
         #now add the recon layer
         mb.add_recon_layer(n=self.output_shape[-1], activation=T.nnet.sigmoid)
 
-        return mb.build_model()
+        return mb.build_model(y)
 
 
 if __name__ == "__main__":
