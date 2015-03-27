@@ -183,7 +183,7 @@ if __name__ == "__main__":
 
     train_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='train')
     test_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='test')
-    validation_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='valid')
+    validation_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='train')
 
     model_config = ConvHiddenClassifyModelConfig(downsample_factor=downsample_factor,
                                               xdim=xdim,
