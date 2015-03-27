@@ -103,7 +103,7 @@ class ModelBuilder():
         x = self.layers[0].input
 
         # the cost we minimize during training is the NLL of the model
-        cost = self.layers[-1].cross_entropy_error(y)
+        cost = self.layers[-1].negative_log_likelihood(y)
 
         # create a function to compute the mistakes that are made by the model
         test_model = theano.function(
