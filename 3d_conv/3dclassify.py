@@ -139,12 +139,12 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     #L1 = abs(layer0.W).sum() + abs(layer1.W).sum() + abs(layer2.W).sum() + abs(layer3.W).sum()
 
     # the cost we minimize during training is the NLL of the model
-    cost = layer3.cross_entropy_error(y)
+    cost = layer3.negative_log_likelihood(y)
 
     # create a function to compute the mistakes that are made by the model
     test_model = theano.function(
         [x,y],
-        cost,
+        layer3.errors(y),
         givens={
             drop: numpy.cast['int32'](0)
         }, allow_input_downcast=True
@@ -152,7 +152,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
     validate_model = theano.function(
         [x,y],
-        cost,
+        layer3.errors(y),
         givens={
 
             drop: numpy.cast['int32'](0)
