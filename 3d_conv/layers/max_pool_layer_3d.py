@@ -29,7 +29,7 @@ class ConvLayer3D(Layer):
         temp_output = max_pool_2d(input=input.dimshuffle(0, 4, 2, 3, 1),
                                   ds=(ds, ds),
                                   ignore_border=ignore_border,)
-        temp_output_shape = DownsampleFactorMax.out_shape(imgshape=input_shape.dimshuffle(0, 4, 2, 3, 1),
+        temp_output_shape = DownsampleFactorMax.out_shape(imgshape=numpy.transpose(input_shape, [0, 4, 2, 3, 1]),
                                                           ds=(ds, ds),
                                                           ignore_border=ignore_border)
 
@@ -37,9 +37,9 @@ class ConvLayer3D(Layer):
         output = max_pool_2d(input=temp_output.dimshuffle(0, 4, 2, 3, 1),
                              ds=(1, ds),
                              ignore_border=ignore_border)
-        output_shape = DownsampleFactorMax.out_shape(imgshape=temp_output_shape.dimshuffle(0, 4, 2, 3, 1),
+        output_shape = DownsampleFactorMax.out_shape(imgshape=numpy.transpose(temp_output_shape, [0, 4, 2, 3, 1]),
                                                      ds=(1, ds),
-                                                     ignore_border=ignore_border);
+                                                     ignore_border=ignore_border)
 
         self.input = input
         self.output = output
