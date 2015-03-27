@@ -53,7 +53,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     n_train_batches = 20
     n_valid_batches = 5
     n_test_batches = 5
-    batch_size = 10
+    batch_size = 5
 
     downsample_factor = 16
     xdim = 256/2/downsample_factor
