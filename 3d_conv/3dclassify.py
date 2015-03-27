@@ -53,7 +53,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     n_train_batches = 20
     n_valid_batches = 5
     n_test_batches = 5
-    batch_size = 3
+    batch_size = 5
 
     downsample_factor = 16
     xdim = 256/2/downsample_factor
@@ -67,7 +67,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     #x = T.matrix('x')   # the data is presented as rasterized images
     dtensor5 = theano.tensor.TensorType('float32', (0,)*5)
     x = dtensor5()
-    y = T.matrix('y')   # the labels are presented as 1D vector of
+    y = T.ivector('y')  # the labels are presented as 1D vector of
                         # [int] labels
 
     ######################
@@ -127,18 +127,11 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         input=layer2_input,
         n_in=nkerns[1] * newZ * newX * newY,
         n_out=1000,
-        activation=relu,
-        drop=drop
+        activation=relu, drop=drop
     )
 
     # classify the values of the fully-connected sigmoidal layer
-    layer3 = ReconLayer(
-        rng,
-        input=layer2.output,
-        n_in=1000,
-        n_out= xdim * zdim * ydim,
-        activation=T.nnet.sigmoid
-    )
+    layer3 = LogisticRegression(input=layer2.output, n_in=900, n_out=10)
 
     # create a list of all model parameters to be fit by gradient descent
     params = layer3.params + layer2.params + layer1.params + layer0.params
@@ -146,12 +139,12 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     #L1 = abs(layer0.W).sum() + abs(layer1.W).sum() + abs(layer2.W).sum() + abs(layer3.W).sum()
 
     # the cost we minimize during training is the NLL of the model
-    cost = layer3.cross_entropy_error(y)
+    cost = layer3.negative_log_likelihood(y)
 
     # create a function to compute the mistakes that are made by the model
     test_model = theano.function(
         [x,y],
-        cost,
+        layer3.errors(y),
         givens={
             drop: numpy.cast['int32'](0)
         }, allow_input_downcast=True
@@ -159,7 +152,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
     validate_model = theano.function(
         [x,y],
-        cost,
+        layer3.errors(y),
         givens={
 
             drop: numpy.cast['int32'](0)
@@ -167,6 +160,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         }, allow_input_downcast=True
 
     )
+
 
     demonstrate_model = theano.function(
         [x,y],
@@ -238,6 +232,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     test_dataset = Model_Net_Dataset(models_dir, patch_size, dataset_type='test')
     validation_dataset = Model_Net_Dataset(models_dir, patch_size, dataset_type='valid')
 
+    categories = train_dataset.get_categories()
 
     while (epoch_count < n_epochs) and (not done_looping):
 
@@ -255,13 +250,9 @@ def evaluate(learning_rate=0.001, n_epochs=200,
             if mini_batch_count % 100 == 0:
                 print 'training @ iter = ', mini_batch_count
 
-            mini_batch_x, mini_batch_y = train_iterator.next()
+            mini_batch_x, mini_batch_y = train_iterator.next(categories)
 
             mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
-            mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
-
-
-            mini_batch_y = mini_batch_y.reshape(batch_size, xdim*ydim*zdim)
 
             cost_ij = train_model(mini_batch_x, mini_batch_y)
 
@@ -270,6 +261,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                 validation_iterator = validation_dataset.iterator(batch_size=batch_size,
                                                                   num_batches=n_valid_batches,
                                                                   mode='even_shuffled_sequential')
+
                 # compute zero-one loss on validation set
                 validation_losses = 0
 
@@ -278,9 +270,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                 for i in xrange(n_valid_batches):
                     mini_batch_x, mini_batch_y = validation_iterator.next()
                     mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
-                    mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
 
-                    mini_batch_y = mini_batch_y.reshape(batch_size, xdim*ydim*zdim)
 
                     validation_losses += validate_model(mini_batch_x, mini_batch_y)
                     if i == 0:
@@ -303,9 +293,12 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
                 image = numpy.reshape(image, (8, 16, 16))
 
-                #visualize_batch_x(demo_x)
-                #visualize_3d(image)
-                #visualize_3d(numpy.reshape(demo_y, (8, 16, 16)))
+                visualize_batch_x(demo_x)
+                visualize_3d(image)
+                visualize_3d(numpy.reshape(demo_y[0], (8,16,16)))
+
+
+
 
                 # if we got the best validation score until now
                 if this_validation_loss < best_validation_loss:
@@ -327,12 +320,10 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                                                       mode='even_shuffled_sequential')
 
                     for j in xrange(n_test_batches):
-                        mini_batch_x, mini_batch_y = test_iterator.next()
-                        mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
-                        mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
+                        batch_x, batch_y = test_iterator.next(categories)
+                        batch_x = downscale_3d(batch_x, downsample_factor)
 
-                        mini_batch_y = mini_batch_y.reshape(batch_size, xdim*ydim*zdim)
-                        test_losses += test_model(mini_batch_x, mini_batch_y)
+                        test_losses += test_model(batch_x, batch_y)
                         test_score = test_losses/n_test_batches
 
                     print(('     epoch %i, minibatch %i/%i, test error of '
