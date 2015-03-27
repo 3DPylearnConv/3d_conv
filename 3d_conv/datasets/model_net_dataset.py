@@ -205,6 +205,8 @@ class ModelNetIteratorClassifier(Model_Net_Iterator):
 
         batch_x = np.zeros((batch_size, patch_size, patch_size, patch_size, 1))
         batch_y = np.zeros((batch_size,))
+        print "dataset size:"
+        print len(self.dataset.examples)
 
         for i in range(len(batch_indices)):
             index = batch_indices[i]
