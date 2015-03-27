@@ -104,11 +104,12 @@ class ModelBuilder():
 
         # the cost we minimize during training is the NLL of the model
         cost = self.layers[-1].negative_log_likelihood(y)
+        errors = self.layers[-1].errors(y)
 
         # create a function to compute the mistakes that are made by the model
         test_model = theano.function(
             [x, y],
-            cost,
+            errors,
             givens={
                 self.drop: numpy.cast['int32'](0)
             }, allow_input_downcast=True
@@ -116,7 +117,7 @@ class ModelBuilder():
 
         validate_model = theano.function(
             [x,y],
-            cost,
+            errors,
             givens={
 
                 self.drop: numpy.cast['int32'](0)

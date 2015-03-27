@@ -29,7 +29,7 @@ class ConvHiddenClassifyModelConfig():
                downsample_factor=16,
                nkerns=(10, 25),
                nhidden=(1000,),
-               xdim=256/2,
+               xdim=256,
                ydim=256,
                zdim=256,
                output=10):
