@@ -30,7 +30,7 @@ from layers.layer_utils import *
 from layers.reconLayer import *
 
 def evaluate(learning_rate=0.001, n_epochs=200,
-                    nkerns=[10, 25], num_train_batches=30):
+                    nkerns=[12, 25], num_train_batches=30):
     """
     :type learning_rate: float
     :param learning_rate: learning rate used (factor for the stochastic
@@ -126,7 +126,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         rng,
         input=layer2_input,
         n_in=nkerns[1] * newZ * newX * newY,
-        n_out=1000,
+        n_out=1100,
         activation=relu, drop=drop
     )
 
