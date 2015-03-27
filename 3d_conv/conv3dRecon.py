@@ -27,7 +27,7 @@ from visualization.visualize import *
 from layers.hidden_layer import *
 from layers.conv_layer_3d import *
 from layers.layer_utils import *
-from layers.reconLayer import *
+from layers.recon_layer import *
 
 def evaluate(learning_rate=0.001, n_epochs=200,
                     nkerns=[12, 25], num_train_batches=30):
@@ -53,7 +53,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     n_train_batches = 20
     n_valid_batches = 5
     n_test_batches = 5
-    batch_size = 5
+    batch_size = 3
 
     downsample_factor = 16
     xdim = 256/2/downsample_factor
@@ -67,7 +67,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     #x = T.matrix('x')   # the data is presented as rasterized images
     dtensor5 = theano.tensor.TensorType('float32', (0,)*5)
     x = dtensor5()
-    y = T.ivector('y')  # the labels are presented as 1D vector of
+    y = T.matrix('y')   # the labels are presented as 1D vector of
                         # [int] labels
 
     ######################
@@ -260,7 +260,8 @@ def evaluate(learning_rate=0.001, n_epochs=200,
             mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
             mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
 
-            mini_batch_y = mini_batch_y.flatten()
+
+            mini_batch_y = mini_batch_y.reshape(batch_size, xdim*ydim*zdim)
 
             cost_ij = train_model(mini_batch_x, mini_batch_y)
 
@@ -269,7 +270,6 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                 validation_iterator = validation_dataset.iterator(batch_size=batch_size,
                                                                   num_batches=n_valid_batches,
                                                                   mode='even_shuffled_sequential')
-
                 # compute zero-one loss on validation set
                 validation_losses = 0
 
@@ -280,7 +280,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                     mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
                     mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
 
-                    mini_batch_y = mini_batch_y.flatten()
+                    mini_batch_y = mini_batch_y.reshape(batch_size, xdim*ydim*zdim)
 
                     validation_losses += validate_model(mini_batch_x, mini_batch_y)
                     if i == 0:
@@ -303,12 +303,9 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
                 image = numpy.reshape(image, (8, 16, 16))
 
-                visualize_batch_x(demo_x)
-                visualize_3d(image)
-                visualize_3d(numpy.reshape(demo_y[0], (8,16,16)))
-
-
-
+                #visualize_batch_x(demo_x)
+                #visualize_3d(image)
+                #visualize_3d(numpy.reshape(demo_y, (8, 16, 16)))
 
                 # if we got the best validation score until now
                 if this_validation_loss < best_validation_loss:
@@ -330,12 +327,12 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                                                       mode='even_shuffled_sequential')
 
                     for j in xrange(n_test_batches):
-                        batch_x, batch_y = test_iterator.next()
-                        batch_x = downscale_3d(batch_x, downsample_factor)
-                        batch_y = downscale_3d(batch_y, downsample_factor)
+                        mini_batch_x, mini_batch_y = test_iterator.next()
+                        mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
+                        mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
 
-                        batch_y = batch_y.flatten()
-                        test_losses += test_model(batch_x, batch_y)
+                        mini_batch_y = mini_batch_y.reshape(batch_size, xdim*ydim*zdim)
+                        test_losses += test_model(mini_batch_x, mini_batch_y)
                         test_score = test_losses/n_test_batches
 
                     print(('     epoch %i, minibatch %i/%i, test error of '
