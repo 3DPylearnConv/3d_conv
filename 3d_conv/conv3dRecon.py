@@ -135,7 +135,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         rng,
         input=layer2.output,
         n_in=1000,
-        n_out= xdim * zdim * ydim * batch_size,
+        n_out= xdim * zdim * ydim,
         activation=T.nnet.sigmoid
     )
 
@@ -301,10 +301,11 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
                 image = results[0]
 
-                numpy.reshape(image, (8, 16, 16))
+                image = numpy.reshape(image, (8, 16, 16))
+
                 visualize_batch_x(demo_x)
                 visualize_3d(image)
-                visualize_3d(demo_y[0])
+                visualize_3d(numpy.reshape(demo_y[0], (8,16,16)))
 
 
 
