@@ -15,7 +15,7 @@ class LogisticRegression(Layer):
     determine a class membership probability.
     """
 
-    def __init__(self, rng=None, input, n_in, n_out):
+    def __init__(self, input, n_in, n_out, rng=None):
         """ Initialize the parameters of the logistic regression
 
         :type input: theano.tensor.TensorType
