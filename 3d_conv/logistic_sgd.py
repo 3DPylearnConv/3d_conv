@@ -141,6 +141,12 @@ class LogisticRegression(object):
         return -T.mean(T.log(self.p_y_given_x)[T.arange(y.shape[0]), y])
         # end-snippet-2
 
+    def cross_entropy_error(self, y):
+        yOneHot = numpy.zeros(y.shape[0],10)
+        for a in xrange(y.shape[0]):
+            yOneHot[a][y[a]] = 1
+
+
     def errors(self, y):
         """Return a float representing the number of errors in the minibatch
         over the total number of examples of the minibatch ; zero one
