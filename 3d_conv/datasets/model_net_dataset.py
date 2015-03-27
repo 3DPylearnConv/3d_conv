@@ -186,6 +186,7 @@ class ModelNetIteratorClassifier(ModelNetIterator):
     def next(self, categories):
 
         batch_indices = self._subset_iterator.next()
+        print batch_indices
 
         if isinstance(batch_indices, slice):
             batch_indices = np.array(range(batch_indices.start, batch_indices.stop))
@@ -204,10 +205,13 @@ class ModelNetIteratorClassifier(ModelNetIterator):
 
         batch_x = np.zeros((batch_size, patch_size, patch_size, patch_size, 1))
         batch_y = np.zeros((batch_size,))
+        print "dataset size:"
+        print len(self.dataset.examples)
 
         for i in range(len(batch_indices)):
             index = batch_indices[i]
             model_filepath, category = self.dataset.examples[index]
+            print model_filepath
 
             with open(model_filepath, 'rb') as f:
                 model = binvox_rw.read_as_3d_array(f)
