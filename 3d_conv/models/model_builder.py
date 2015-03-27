@@ -82,6 +82,17 @@ class ModelBuilder():
 
         self.layers.append(layer)
 
+    def add_logistic_regression_layer(self, n):
+        layer = LogisticRegression(
+            self.rng,
+            input=self.layers[-1].output,
+            n_in=self.layers[-1].output_shape[-1],
+            n_out=n,
+
+        )
+
+        self.layers.append(layer)
+
     def build_model(self, y):
 
         params = []
