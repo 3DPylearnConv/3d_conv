@@ -13,6 +13,7 @@ from layers.conv_layer_3d import *
 from layers.layer_utils import *
 from layers.recon_layer import *
 from layers.flatten_layer import *
+from layers.logistic_regression_layer.py import *
 
 from collections import namedtuple
 
