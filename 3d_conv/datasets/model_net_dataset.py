@@ -186,7 +186,6 @@ class ModelNetIteratorClassifier(ModelNetIterator):
     def next(self, categories):
 
         batch_indices = self._subset_iterator.next()
-        print batch_indices
 
         if isinstance(batch_indices, slice):
             batch_indices = np.array(range(batch_indices.start, batch_indices.stop))
