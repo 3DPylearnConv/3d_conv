@@ -62,7 +62,6 @@ def softmax(X):
     return e_x / e_x.sum(axis=1).dimshuffle(0, 'x')
 
 
-'''
 def max_pool_3d_numpy(the_5d_input, downscale_factor):
     """
     Max-pools a 3d layer (represented as a 5d BZCXY array) by the same downscale_factor in each dimension. Assumes that each of
@@ -78,7 +77,6 @@ def max_pool_3d_numpy(the_5d_input, downscale_factor):
                                            array_shape[4] / downscale_factor,
                                            downscale_factor),
                       axis=(2, 5, 7))
-'''
 
 
 def max_pool_3d(input, ds, ignore_border=False, st=None, padding=0):
