@@ -2,7 +2,9 @@ import theano
 import theano.tensor as T
 import numpy
 
+
 class ReconLayer(object):
+
     def __init__(self, rng, input, n_in, n_out, W=None, b=None,
                  activation=T.nnet.sigmoid):
 
@@ -24,16 +26,17 @@ class ReconLayer(object):
         self.b = b
 
         lin_output = T.dot(input, self.W) + self.b
+
         self.output = (
             lin_output if activation is None
             else activation(lin_output)
         )
-        # parameters of the model
+
         self.params = [self.W, self.b]
 
     def cross_entropy_error(self, y):
         # return T.mean(T.nnet.categorical_crossentropy(self.output, y))
-        L = - T.sum(y* T.log(self.output) + (1 - y) * T.log(1 - self.output), axis=1)
+        L = - T.sum(y * T.log(self.output) + (1 - y) * T.log(1 - self.output), axis=1)
         cost = T.mean(L)
         return cost
 

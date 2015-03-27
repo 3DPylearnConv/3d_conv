@@ -5,8 +5,17 @@ from layers.layer_utils import *
 
 class HiddenLayer(object):
 
-    def __init__(self, rng, input, n_in, n_out, drop, W=None, b=None,
-                 activation=T.tanh, p=0.5):
+    def __init__(self,
+                 rng,
+                 input,
+                 n_out,
+                 drop,
+                 input_shape=None,
+                 n_in=None,
+                 W=None,
+                 b=None,
+                 activation=T.tanh,
+                 p=0.5):
         """
         Typical hidden layer of a MLP: units are fully-connected and have
         sigmoidal activation function. Weight matrix W is of shape (n_in,n_out)
@@ -33,6 +42,17 @@ class HiddenLayer(object):
                            layer
         """
         self.input = input
+
+        if not n_in:
+            n_in = input_shape[-1]
+            self.input_shape = input_shape
+            self.output_shape = (input_shape[0], n_out)
+
+            print
+            print "adding hidden layer"
+            print "input shape: " + str(self.input_shape)
+            print "output shape: " + str(self.output_shape)
+
         # end-snippet-1
 
         # `W` is initialized with `W_values` which is uniformely sampled

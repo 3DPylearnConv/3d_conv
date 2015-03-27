@@ -6,6 +6,8 @@ import numpy as np
 
 def visualize_3d(data):
 
+    data[data < 0.5] = 0
+
     non_zero_indices = data.nonzero()
 
     fig = plt.figure()
