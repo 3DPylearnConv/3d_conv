@@ -300,6 +300,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                 results = demonstrate_model(demo_x, demo_y)
 
                 image = results[0]
+
                 numpy.reshape(image, (8, 16, 16))
                 visualize_batch_x(demo_x)
                 visualize_3d(image)
