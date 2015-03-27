@@ -34,7 +34,7 @@ n_epochs = 200
 n_train_batches = 20
 n_valid_batches = 5
 n_test_batches = 5
-batch_size = 3
+batch_size = 5
 
 # early-stopping parameters
 # look as this many examples regardless
