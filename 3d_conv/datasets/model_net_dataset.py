@@ -15,7 +15,7 @@ import os
 import binvox_rw
 
 
-class Model_Net_Dataset(pylearn2.datasets.dataset.Dataset):
+class ModelNetDataset(pylearn2.datasets.dataset.Dataset):
 
     def __init__(self, models_dir, patch_size=100, dataset_type='train'):
         if dataset_type == 'valid':
@@ -51,7 +51,7 @@ class Model_Net_Dataset(pylearn2.datasets.dataset.Dataset):
                  topo=None, targets=None, rng=None, data_specs=None,
                  return_tuple=False, type="default"):
         if type == "default":
-            return Model_Net_Iterator(self,
+            return ModelNetIterator(self,
                                  batch_size=batch_size,
                                  num_batches=num_batches,
                                  mode=mode)
@@ -62,7 +62,7 @@ class Model_Net_Dataset(pylearn2.datasets.dataset.Dataset):
                      mode=mode)
 
 
-class Model_Net_Iterator():
+class ModelNetIterator():
 
     def __init__(self, dataset,
                  batch_size,
@@ -181,7 +181,7 @@ class Model_Net_Iterator():
     def stochastic(self):
         return self._subset_iterator.stochastic
 
-class ModelNetIteratorClassifier(Model_Net_Iterator):
+class ModelNetIteratorClassifier(ModelNetIterator):
 
     def next(self, categories):
 
@@ -209,7 +209,6 @@ class ModelNetIteratorClassifier(Model_Net_Iterator):
         for i in range(len(batch_indices)):
             index = batch_indices[i]
             model_filepath, category = self.dataset.examples[index]
-            print model_filepath
 
             with open(model_filepath, 'rb') as f:
                 model = binvox_rw.read_as_3d_array(f)
