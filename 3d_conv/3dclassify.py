@@ -261,7 +261,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                 demo_x = 0
                 demo_y = 0
                 for i in xrange(n_valid_batches):
-                    mini_batch_x, mini_batch_y = validation_iterator.next()
+                    mini_batch_x, mini_batch_y = validation_iterator.next(categories)
                     mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
 
 
