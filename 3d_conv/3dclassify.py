@@ -63,7 +63,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
     drop = T.iscalar('drop')
 
-    # start-snippet-1
+    # start-snippet-1`
     #x = T.matrix('x')   # the data is presented as rasterized images
     dtensor5 = theano.tensor.TensorType('float32', (0,)*5)
     x = dtensor5()
