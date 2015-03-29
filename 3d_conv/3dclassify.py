@@ -53,7 +53,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     n_train_batches = 20
     n_valid_batches = 5
     n_test_batches = 5
-    batch_size = 5
+    batch_size = 20
 
     downsample_factor = 16
     xdim = 256/downsample_factor
@@ -63,7 +63,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
     drop = T.iscalar('drop')
 
-    # start-snippet-1`
+    # start-snippet-1
     #x = T.matrix('x')   # the data is presented as rasterized images
     dtensor5 = theano.tensor.TensorType('float32', (0,)*5)
     x = dtensor5()
@@ -126,12 +126,12 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         rng,
         input=layer2_input,
         n_in=nkerns[1] * newZ * newX * newY,
-        n_out=1000,
+        n_out=1200,
         activation=relu, drop=drop
     )
 
     # classify the values of the fully-connected sigmoidal layer
-    layer3 = LogisticRegression(input=layer2.output, n_in=1000, n_out=10)
+    layer3 = LogisticRegression(input=layer2.output, n_in=1200, n_out=10)
 
     # create a list of all model parameters to be fit by gradient descent
     params = layer3.params + layer2.params + layer1.params + layer0.params
@@ -302,6 +302,12 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                     test_iterator = test_dataset.iterator(batch_size=batch_size,
                                                       num_batches=n_test_batches,
                                                       mode='even_shuffled_sequential', type='classify')
+
+                    numpy.save('dropout2layer0', layer0.params)
+                    numpy.save('dropout2layer1', layer1.params)
+                    numpy.save('dropout2layer2', layer2.params)
+                    numpy.save('dropout2layer3', layer3.params)
+
 
                     for j in xrange(n_test_batches):
                         batch_x, batch_y = test_iterator.next(categories)
