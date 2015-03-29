@@ -21,7 +21,7 @@ from theano.tensor.nnet import conv
 from theano.tensor.nnet.conv3d2d import *
 
 from logistic_sgd import LogisticRegression
-from datasets.model_net_dataset import Model_Net_Dataset
+from datasets.model_net_dataset import ModelNetDataset
 from visualization.visualize import *
 
 from layers.hidden_layer import *
@@ -221,9 +221,9 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     models_dir = '/srv/3d_conv_data/ModelNet10'
     patch_size = 256
 
-    train_dataset = Model_Net_Dataset(models_dir, patch_size, dataset_type='train')
-    test_dataset = Model_Net_Dataset(models_dir, patch_size, dataset_type='train')
-    validation_dataset = Model_Net_Dataset(models_dir, patch_size, dataset_type='train')
+    train_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='train')
+    test_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='train')
+    validation_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='train')
 
     categories = train_dataset.get_categories()
 
