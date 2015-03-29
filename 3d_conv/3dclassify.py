@@ -223,7 +223,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
     train_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='train')
     test_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='train')
-    validation_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='train')
+    validation_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='test')
 
     categories = train_dataset.get_categories()
 
