@@ -90,7 +90,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         input=x,
         image_shape=(batch_size, zdim, 1, xdim, ydim),
         filter_shape=(nkerns[0], convsize, 1, convsize, convsize),
-        poolsize=(0, 0), drop=numpy.cast['int32'](0)
+        poolsize=(0, 0), drop=drop
     )
 
     # Construct the second convolutional pooling layer
@@ -108,7 +108,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         input=layer0.output,
         image_shape=(batch_size, newZ, nkerns[0], newX, newY),
         filter_shape=(nkerns[1], convsize, nkerns[0], convsize, convsize),
-        poolsize=(0, 0), drop=numpy.cast['int32'](0)
+        poolsize=(0, 0), drop=drop
     )
 
     # the HiddenLayer being fully-connected, it operates on 2D matrices of
@@ -188,7 +188,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         updates=updates,
         givens={
 
-            drop: numpy.cast['int32'](1)
+            drop: numpy.cast['int32'](0)
 
         }, allow_input_downcast=True
     )
