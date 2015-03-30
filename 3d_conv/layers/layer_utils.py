@@ -81,6 +81,8 @@ def max_pool_3d_numpy(the_5d_input, downscale_factor):
 
 def max_pool_3d(input, ds, ignore_border=False, st=None, padding=0):
     """
+    Note: This function will be replaced by "MaxPoolLayer3D" layer when we are comfortable with using our new layer system
+
     Takes as input a 5-D tensor. It downscales the input image by
     the specified factor, by keeping only the maximum value of non-overlapping
     patches of size (ds[0],ds[1])

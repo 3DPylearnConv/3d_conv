@@ -13,6 +13,7 @@ from layers.conv_layer_3d import *
 from layers.layer_utils import *
 from layers.recon_layer import *
 from layers.flatten_layer import *
+from layers.logistic_regression_layer import *
 
 from collections import namedtuple
 
@@ -82,6 +83,17 @@ class ModelBuilder():
 
         self.layers.append(layer)
 
+    def add_logistic_regression_layer(self, n):
+        layer = LogisticRegression(
+            input=self.layers[-1].output,
+            n_in=self.layers[-1].output_shape[-1],
+            n_out=n,rng=self.rng
+
+
+        )
+
+        self.layers.append(layer)
+
     def build_model(self, y):
 
         params = []
@@ -91,12 +103,13 @@ class ModelBuilder():
         x = self.layers[0].input
 
         # the cost we minimize during training is the NLL of the model
-        cost = self.layers[-1].cross_entropy_error(y)
+        cost = self.layers[-1].negative_log_likelihood(y)
+        errors = self.layers[-1].errors(y)
 
         # create a function to compute the mistakes that are made by the model
         test_model = theano.function(
             [x, y],
-            cost,
+            errors,
             givens={
                 self.drop: numpy.cast['int32'](0)
             }, allow_input_downcast=True
@@ -104,7 +117,7 @@ class ModelBuilder():
 
         validate_model = theano.function(
             [x,y],
-            cost,
+            errors,
             givens={
 
                 self.drop: numpy.cast['int32'](0)
@@ -113,11 +126,12 @@ class ModelBuilder():
 
         )
 
-        demonstrate_model = theano.function(
+        demonstrate_model = None
+        """theano.function(
             [x, y],
             self.layers[-1].return_output(),
             givens={self.drop: numpy.cast['int32'](0)}, on_unused_input='ignore'
-        )
+        )"""
 
         # create a list of gradients for all model parameters
         grads = T.grad(cost, params)

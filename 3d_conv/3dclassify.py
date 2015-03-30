@@ -21,7 +21,7 @@ from theano.tensor.nnet import conv
 from theano.tensor.nnet.conv3d2d import *
 
 from logistic_sgd import LogisticRegression
-from datasets.model_net_dataset import Model_Net_Dataset
+from datasets.model_net_dataset import ModelNetDataset
 from visualization.visualize import *
 
 from layers.hidden_layer import *
@@ -53,7 +53,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     n_train_batches = 20
     n_valid_batches = 5
     n_test_batches = 5
-    batch_size = 5
+    batch_size = 20
 
     downsample_factor = 16
     xdim = 256/downsample_factor
@@ -126,12 +126,12 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         rng,
         input=layer2_input,
         n_in=nkerns[1] * newZ * newX * newY,
-        n_out=1000,
+        n_out=1200,
         activation=relu, drop=drop
     )
 
     # classify the values of the fully-connected sigmoidal layer
-    layer3 = LogisticRegression(input=layer2.output, n_in=1000, n_out=10)
+    layer3 = LogisticRegression(input=layer2.output, n_in=1200, n_out=10)
 
     # create a list of all model parameters to be fit by gradient descent
     params = layer3.params + layer2.params + layer1.params + layer0.params
@@ -188,7 +188,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         updates=updates,
         givens={
 
-            drop: numpy.cast['int32'](1)
+            drop: numpy.cast['int32'](0)
 
         }, allow_input_downcast=True
     )
@@ -221,9 +221,9 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     models_dir = '/srv/3d_conv_data/ModelNet10'
     patch_size = 256
 
-    train_dataset = Model_Net_Dataset(models_dir, patch_size, dataset_type='train')
-    test_dataset = Model_Net_Dataset(models_dir, patch_size, dataset_type='train')
-    validation_dataset = Model_Net_Dataset(models_dir, patch_size, dataset_type='train')
+    train_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='train')
+    test_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='test')
+    validation_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='train')
 
     categories = train_dataset.get_categories()
 
@@ -302,6 +302,12 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                     test_iterator = test_dataset.iterator(batch_size=batch_size,
                                                       num_batches=n_test_batches,
                                                       mode='even_shuffled_sequential', type='classify')
+
+                    numpy.save('dropout2layer0', layer0.params)
+                    numpy.save('dropout2layer1', layer1.params)
+                    numpy.save('dropout2layer2', layer2.params)
+                    numpy.save('dropout2layer3', layer3.params)
+
 
                     for j in xrange(n_test_batches):
                         batch_x, batch_y = test_iterator.next(categories)

@@ -17,6 +17,7 @@ from layers.hidden_layer import *
 from layers.conv_layer_3d import *
 from layers.layer_utils import *
 from layers.recon_layer import *
+from models.conv_hidden_classifier import *
 
 ########################################
 #Settings
@@ -24,7 +25,7 @@ from layers.recon_layer import *
 patch_size = 256
 downsample_factor = 16
 
-xdim = patch_size/2
+xdim = patch_size
 ydim = patch_size
 zdim = patch_size
 
@@ -33,7 +34,7 @@ n_epochs = 200
 n_train_batches = 20
 n_valid_batches = 5
 n_test_batches = 5
-batch_size = 3
+batch_size = 6
 
 # early-stopping parameters
 # look as this many examples regardless
@@ -71,13 +72,16 @@ def train(model,
     epoch_count = 0
     done_looping = False
 
+    categories = train_dataset.get_categories()
+
     while (epoch_count < n_epochs) and (not done_looping):
 
         epoch_count += 1
 
+
         train_iterator = train_dataset.iterator(batch_size=batch_size,
                                                 num_batches=n_train_batches,
-                                                mode='even_shuffled_sequential')
+                                                mode='even_shuffled_sequential', type='classify')
 
         for minibatch_index in xrange(n_train_batches):
 
@@ -86,12 +90,9 @@ def train(model,
             if mini_batch_count % 100 == 0:
                 print 'training @ iter = ', mini_batch_count
 
-            mini_batch_x, mini_batch_y = train_iterator.next()
+            mini_batch_x, mini_batch_y = train_iterator.next(categories)
 
             mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
-            mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
-
-            mini_batch_y = mini_batch_y.reshape(batch_size, xdim/downsample_factor*ydim/downsample_factor*zdim/downsample_factor)
 
             cost_ij = model.train(mini_batch_x, mini_batch_y)
 
@@ -99,18 +100,17 @@ def train(model,
 
                 validation_iterator = validation_dataset.iterator(batch_size=batch_size,
                                                                   num_batches=n_valid_batches,
-                                                                  mode='even_shuffled_sequential')
+                                                                  mode='even_shuffled_sequential', type = 'classify')
+
                 # compute zero-one loss on validation set
                 validation_losses = 0
 
                 demo_x = 0
                 demo_y = 0
                 for i in xrange(n_valid_batches):
-                    mini_batch_x, mini_batch_y = validation_iterator.next()
+                    mini_batch_x, mini_batch_y = validation_iterator.next(categories)
                     mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
-                    mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
 
-                    mini_batch_y = mini_batch_y.reshape(batch_size, xdim/downsample_factor*ydim/downsample_factor*zdim/downsample_factor)
 
                     validation_losses += model.validate(mini_batch_x, mini_batch_y)
                     if i == 0:
@@ -126,12 +126,10 @@ def train(model,
 
 
                 # get 1 example for demonstrating the model:
-                #results = model.demonstrate(demo_x, demo_y)
-                #image = results[0]
-                #image = numpy.reshape(image, (8, 16, 16))
-                #visualize_batch_x(demo_x)
-                #visualize_3d(image)
-                #visualize_3d(numpy.reshape(demo_y, (8, 16, 16)))
+
+
+
+
 
                 # if we got the best validation score until now
                 if this_validation_loss < best_validation_loss:
@@ -150,18 +148,16 @@ def train(model,
 
                     test_iterator = test_dataset.iterator(batch_size=batch_size,
                                                       num_batches=n_test_batches,
-                                                      mode='even_shuffled_sequential')
+                                                      mode='even_shuffled_sequential', type='classify')
 
                     for j in xrange(n_test_batches):
-                        mini_batch_x, mini_batch_y = test_iterator.next()
-                        mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
-                        mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
+                        batch_x, batch_y = test_iterator.next(categories)
+                        batch_x = downscale_3d(batch_x, downsample_factor)
 
-                        mini_batch_y = mini_batch_y.reshape(batch_size, xdim/downsample_factor*ydim/downsample_factor*zdim/downsample_factor)
-                        test_losses += model.test(mini_batch_x, mini_batch_y)
+                        test_losses += model.test(batch_x, batch_y)
                         test_score = test_losses/n_test_batches
 
-                    print(('epoch %i, minibatch %i/%i, test error of '
+                    print(('     epoch %i, minibatch %i/%i, test error of '
                            'best model %f %%') %
                           (epoch_count, minibatch_index + 1, n_train_batches,
                            test_score * 100.))
@@ -170,6 +166,7 @@ def train(model,
             if patience <= mini_batch_count:
                 done_looping = True
                 break
+
 
     end_time = time.clock()
     print('Optimization complete.')
@@ -187,12 +184,13 @@ if __name__ == "__main__":
 
     train_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='train')
     test_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='test')
-    validation_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='valid')
+    validation_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='train')
 
-    model_config = ConvHiddenReconModelConfig(downsample_factor=downsample_factor,
-                                              xdim=xdim,
-                                              ydim=ydim,
-                                              zdim=zdim)
+    model_config = ConvHiddenClassifyModelConfig(batch_size=batch_size,
+                                                 downsample_factor=downsample_factor,
+                                                 xdim=xdim,
+                                                 ydim=ydim,
+                                                 zdim=zdim)
 
     model = model_config.build_model()
 
