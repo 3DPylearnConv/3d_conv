@@ -17,11 +17,11 @@ def visualize_3d(data):
     fig.show()
 
 
-def visualize_batch_x(batch_x):
+def visualize_batch_x(batch_x, i=0):
 
     #switch (b 2 c 0 1) to (b 0 1 2 c)
     b = batch_x.transpose(0, 3, 4, 1, 2)
-    data = b[0, :, :, :, :]
+    data = b[i, :, :, :, :]
     print data.shape
     visualize_3d(data)
 
