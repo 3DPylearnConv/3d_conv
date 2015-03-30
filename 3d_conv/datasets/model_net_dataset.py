@@ -113,8 +113,6 @@ class ModelNetIterator():
         batch_indices = np.random.random_integers(0, self.dataset.get_num_examples(), self.batch_size)
         batch_indices.sort()
 
-        print batch_indices
-
 
         if isinstance(batch_indices, slice):
             batch_indices = np.array(range(batch_indices.start, batch_indices.stop))
@@ -191,8 +189,6 @@ class ModelNetIteratorClassifier(ModelNetIterator):
 
         batch_indices = np.random.random_integers(0, self.dataset.get_num_examples(), self.batch_size)
         batch_indices.sort()
-
-        print batch_indices
 
         if isinstance(batch_indices, slice):
             batch_indices = np.array(range(batch_indices.start, batch_indices.stop))
