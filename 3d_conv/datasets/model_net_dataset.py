@@ -187,26 +187,13 @@ class ModelNetIteratorClassifier(ModelNetIterator):
 
     def next(self, categories):
 
-        batch_indices = np.random.random_integers(0, self.dataset.get_num_examples(), self.batch_size)
-        batch_indices.sort()
+        batch_indices = np.random.random_integers(0, self.dataset.get_num_examples()-1, self.batch_size)
 
-        if isinstance(batch_indices, slice):
-            batch_indices = np.array(range(batch_indices.start, batch_indices.stop))
-
-        # if we are using a shuffled sequential subset iterator
-        # then next_index will be something like:
-        # array([13713, 14644, 30532, 32127, 35746, 44163, 48490, 49363, 52141, 52216])
-        # hdf5 can only support this sort of indexing if the array elements are
-        # in increasing order
-        batch_size = 0
-        if isinstance(batch_indices, np.ndarray):
-            batch_indices.sort()
-            batch_size = len(batch_indices)
 
         patch_size = self.dataset.patch_size
 
-        batch_x = np.zeros((batch_size, patch_size, patch_size, patch_size, 1))
-        batch_y = np.zeros((batch_size,))
+        batch_x = np.zeros((self.batch_size, patch_size, patch_size, patch_size, 1))
+        batch_y = np.zeros((self.batch_size,))
 
         for i in range(len(batch_indices)):
             index = batch_indices[i]
