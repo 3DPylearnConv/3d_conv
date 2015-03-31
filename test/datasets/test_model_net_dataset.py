@@ -16,7 +16,7 @@ class TestModelNetDataset(unittest.TestCase):
         self.models_dir = '/srv/3d_conv_data/ModelNet10'
         self.patch_size = 256
 
-        self.dataset = model_net_dataset.Model_Net_Dataset(self.models_dir,
+        self.dataset = model_net_dataset.ModelNetDataset(self.models_dir,
                                                            self.patch_size)
 
     def test_iterator(self):

@@ -30,7 +30,7 @@ from layers.layer_utils import *
 from layers.recon_layer import *
 
 def evaluate(learning_rate=0.001, n_epochs=200,
-                    nkerns=[12, 25], num_train_batches=30):
+                    nkerns=[10, 15], num_train_batches=30):
     """
     :type learning_rate: float
     :param learning_rate: learning rate used (factor for the stochastic
@@ -51,11 +51,11 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
     # compute number of minibatches for training, validation and testing
     n_train_batches = 20
-    n_valid_batches = 5
+    n_valid_batches = 10
     n_test_batches = 5
-    batch_size = 20
+    batch_size = 10
 
-    downsample_factor = 16
+    downsample_factor = 8
     xdim = 256/downsample_factor
     ydim = 256/downsample_factor
     zdim = 256/downsample_factor
@@ -126,12 +126,12 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         rng,
         input=layer2_input,
         n_in=nkerns[1] * newZ * newX * newY,
-        n_out=1200,
+        n_out=400,
         activation=relu, drop=drop
     )
 
     # classify the values of the fully-connected sigmoidal layer
-    layer3 = LogisticRegression(input=layer2.output, n_in=1200, n_out=10)
+    layer3 = LogisticRegression(input=layer2.output, n_in=400, n_out=10)
 
     # create a list of all model parameters to be fit by gradient descent
     params = layer3.params + layer2.params + layer1.params + layer0.params
@@ -188,7 +188,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         updates=updates,
         givens={
 
-            drop: numpy.cast['int32'](0)
+            drop: numpy.cast['int32'](1)
 
         }, allow_input_downcast=True
     )
