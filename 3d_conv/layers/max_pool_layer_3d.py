@@ -8,7 +8,7 @@ from layers.layer import Layer
 class MaxPoolLayer3D(Layer):
     """3D Layer of a convolutional network """
 
-    def __init__(self, input, input_shape, ds, ignore_border=False):
+    def __init__(self, input, input_shape, ds=2, ignore_border=False):
         """
         Allocate a layer for 3d max-pooling.
 

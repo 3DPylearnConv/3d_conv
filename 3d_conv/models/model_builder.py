@@ -52,6 +52,16 @@ class ModelBuilder():
 
         self.layers.append(layer)
 
+    def add_max_pool_layer(self, downsample_factor=2, ignore_border=False):
+        layer = MaxPoolLayer3D(
+            input=self.layers[-1].output,
+            image_shape=self.layers[-1].output_shape,
+            ds=downsample_factor,
+            ignore_border=ignore_border
+        )
+
+        self.layers.append(layer)
+
     def add_flatten_layer(self):
         layer = FlattenLayer(
             input=self.layers[-1].output,
