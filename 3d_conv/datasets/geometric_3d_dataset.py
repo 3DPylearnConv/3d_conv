@@ -1,8 +1,8 @@
-import theano
 import numpy as np
 import math
 
-class Geometric3DDataGenerator:
+
+class Geometric3DDataset:
     # Geometry types
     SPHERE_TYPE = 0
     DIAMOND_TYPE = 1  # a cube with vertices touching the axes
@@ -32,7 +32,7 @@ class Geometric3DDataGenerator:
         if self.centered:
             (x0, y0, z0) = ((self.patch_size-1)/2,)*3
         else:
-            if self.task == Geometric3DDataGenerator.HALF_COMPLETION_TASK:
+            if self.task == Geometric3DDataset.HALF_COMPLETION_TASK:
                 x0 = (self.patch_size-1)/2
                 # generate 2 numbers in the range [0, self.patch_size-1)
                 (y0, z0) = np.random.rand(2)*(self.patch_size-1)
@@ -55,7 +55,7 @@ class Geometric3DDataGenerator:
             y_max = int(min(math.floor(y0+radius), self.patch_size-1))
             z_max = int(min(math.floor(z0+radius), self.patch_size-1))
 
-            if geometry_types[i] == Geometric3DDataGenerator.SPHERE_TYPE:
+            if geometry_types[i] == Geometric3DDataset.SPHERE_TYPE:
                 # We only iterate through the bounding box of the sphere to check whether voxels are inside the sphere
                 radius_squared = radius**2
                 for z in xrange(z_min, z_max+1):
@@ -64,7 +64,7 @@ class Geometric3DDataGenerator:
                             if (x-x0)**2 + (y-y0)**2 + (z-z0)**2 <= radius_squared:
                                 # inside the sphere
                                 solid_figures[i, z, 0, x, y] = 1
-            elif geometry_types[i] == Geometric3DDataGenerator.DIAMOND_TYPE:
+            elif geometry_types[i] == Geometric3DDataset.DIAMOND_TYPE:
                 # We only iterate through the bounding box of the diamond to check whether voxels are inside the diamond
                 for z in xrange(z_min, z_max+1):
                     for x in xrange(x_min, x_max+1):
@@ -72,7 +72,7 @@ class Geometric3DDataGenerator:
                             if abs(x-x0) + abs(y-y0) + abs(z-z0) <= radius:
                                 # inside the diamond
                                 solid_figures[i, z, 0, x, y] = 1
-            elif geometry_types[i] == Geometric3DDataGenerator.CUBE_TYPE:
+            elif geometry_types[i] == Geometric3DDataset.CUBE_TYPE:
                 solid_figures[i, z_min:z_max+1, 0, x_min:x_max+1, y_min:y_max+1] = 1
             else:
                 raise NotImplementedError
@@ -80,10 +80,10 @@ class Geometric3DDataGenerator:
         return solid_figures
 
     def __kinect_scan(self, solid_figures):
-        '''
+        """
         Takes a 5-d boolean numpy array representing batches of 3-d data in BZCXY format.
         Returns a 5-d array of the same shape, containing only one "on" z value (the one with the lowest index) per each (x, y) pair.
-        '''
+        """
         kinect_result = np.zeros(solid_figures.shape, dtype=np.bool_)
         for i in xrange(self.batch_size):
             for x, y in itertools.product(*map(xrange, (self.patch_size, self.patch_size))):
@@ -100,20 +100,20 @@ class Geometric3DDataGenerator:
         return one_hot_matrix
 
     def next_batch(self):
-        if self.task == Geometric3DDataGenerator.CLASSIFICATION_TASK:
+        if self.task == Geometric3DDataset.CLASSIFICATION_TASK:
             # TODO: allow users to specify how they want the classes to be distributed, etc. Also hard-coding the
             #   number of labels is kind of ugly
             geometry_types = np.random.randint(0, self.num_labels, self.batch_size)
             labels = self.__one_hot(geometry_types)
             data = self.__generate_solid_figures(
-                geometry_types=(Geometric3DDataGenerator.SPHERE_TYPE,) * self.batch_size)
-        elif self.task == Geometric3DDataGenerator.KINECT_COMPLETION_TASK:
+                geometry_types=(Geometric3DDataset.SPHERE_TYPE,) * self.batch_size)
+        elif self.task == Geometric3DDataset.KINECT_COMPLETION_TASK:
             labels = self.__generate_solid_figures(
-                geometry_types=(Geometric3DDataGenerator.SPHERE_TYPE,) * self.batch_size)
+                geometry_types=(Geometric3DDataset.SPHERE_TYPE,) * self.batch_size)
             data = self.__kinect_scan(labels)
-        elif self.task == Geometric3DDataGenerator.HALF_COMPLETION_TASK:
+        elif self.task == Geometric3DDataset.HALF_COMPLETION_TASK:
             temp = self.__generate_solid_figures(
-                geometry_types=(Geometric3DDataGenerator.SPHERE_TYPE,) * self.batch_size)
+                geometry_types=(Geometric3DDataset.SPHERE_TYPE,) * self.batch_size)
             # split the volume in halves in the x direction
             data = temp[:, :, :, :int(self.patch_size/2), :]
             labels = temp[:, :, :, int(self.patch_size/2):, :]
