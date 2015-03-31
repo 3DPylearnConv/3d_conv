@@ -8,12 +8,13 @@ import theano.tensor as T
 
 from theano.tensor.nnet.conv3d2d import *
 
-from layers.hidden_layer import *
 from layers.conv_layer_3d import *
-from layers.layer_utils import *
-from layers.recon_layer import *
 from layers.flatten_layer import *
+from layers.hidden_layer import *
+from layers.layer_utils import *
 from layers.logistic_regression_layer import *
+from layers.max_pool_layer_3d import *
+from layers.recon_layer import *
 
 from collections import namedtuple
 
