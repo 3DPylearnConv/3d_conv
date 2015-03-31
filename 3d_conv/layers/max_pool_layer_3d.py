@@ -5,7 +5,7 @@ from layers.layer_utils import *
 from layers.layer import Layer
 
 
-class ConvLayer3D(Layer):
+class MaxPoolLayer3D(Layer):
     """3D Layer of a convolutional network """
 
     def __init__(self, input, input_shape, ds, ignore_border=False):
