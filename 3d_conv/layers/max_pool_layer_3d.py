@@ -24,7 +24,7 @@ class MaxPoolLayer3D(Layer):
         :type ignore_border: bool
         :param ignore_border: When True, (5,5,5) input with ds=2
             will generate a (2,2,2) output. (3,3,3) otherwise.
-    """
+        """
 
         # max_pool_2d X and Z
         temp_output = max_pool_2d(input=input.dimshuffle(0, 4, 2, 3, 1),
@@ -44,7 +44,7 @@ class MaxPoolLayer3D(Layer):
 
         self.input = input
         self.output = output
-        self.params = [ds, ignore_border]
+        self.params = []
 
         self.input_shape = input_shape
         self.output_shape = output_shape
