@@ -106,7 +106,7 @@ class Geometric3DDataset:
             geometry_types = np.random.randint(0, self.num_labels, self.batch_size)
             labels = self.__one_hot(geometry_types)
             data = self.__generate_solid_figures(
-                geometry_types=(Geometric3DDataset.SPHERE_TYPE,) * self.batch_size)
+                geometry_types=geometry_types)
         elif self.task == Geometric3DDataset.KINECT_COMPLETION_TASK:
             labels = self.__generate_solid_figures(
                 geometry_types=(Geometric3DDataset.SPHERE_TYPE,) * self.batch_size)
