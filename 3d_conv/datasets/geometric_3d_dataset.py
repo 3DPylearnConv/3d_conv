@@ -41,7 +41,7 @@ class Geometric3DDataset:
                 (x0, y0, z0) = np.random.rand(3)*(self.patch_size-1)
 
         solid_figures = np.zeros((self.batch_size, self.patch_size, 1, self.patch_size, self.patch_size),
-                                 dtype=np.bool_)
+                                 dtype=np.bool)
 
         for i in xrange(self.batch_size):
             # radius is a random number in [3, self.patch_size/2)
@@ -88,7 +88,7 @@ class Geometric3DDataset:
         for i in xrange(self.batch_size):
             for x, y in itertools.product(*map(xrange, (self.patch_size, self.patch_size))):
                 for z in xrange(self.patch_size):
-                    if solid_figures[i, z, 0, x, y]==1:
+                    if solid_figures[i, z, 0, x, y] == 1:
                         kinect_result[i, z, 0, x, y] = 1
                         break
         return kinect_result
@@ -101,8 +101,8 @@ class Geometric3DDataset:
 
     def next_batch(self):
         if self.task == Geometric3DDataset.CLASSIFICATION_TASK:
-            # TODO: allow users to specify how they want the classes to be distributed, etc. Also hard-coding the
-            #   number of labels is kind of ugly
+            # TODO: allow users to specify how they want the classes to be distributed.
+            # Currently using same probability for each class
             geometry_types = np.random.randint(0, self.num_labels, self.batch_size)
             labels = self.__one_hot(geometry_types)
             data = self.__generate_solid_figures(
