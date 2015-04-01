@@ -8,6 +8,32 @@ def relu(x):
     return T.maximum(x, 0.0)
 
 
+def leaky_relu(x, alpha=0.3):
+    """
+    TODO: we haven't tested this method with our system yet.
+    Reference:
+        Keras library. https://github.com/fchollet/keras/blob/master/keras/layers/advanced_activations.py
+    """
+    return ((x + abs(x)) / 2.0) + alpha * ((x - abs(x)) / 2.0)
+
+
+'''
+def prelu(x):
+    """
+    TODO: we haven't tested this method yet with our system. We need to make this an actual layer class so that
+            we can set the alphas as shared variable parameters for differentiation.
+    References:
+        - Keras library. https://github.com/fchollet/keras/blob/master/keras/layers/advanced_activations.py
+        - Delving Deep into Rectifiers: Surpassing Human-Level Performance on ImageNet Classification
+              http://arxiv.org/pdf/1502.01852v1.pdf
+    """
+    alphas = theano.shared(numpy.zeros(x.shape, dtype=numpy.float32))
+    pos = ((x + abs(x)) / 2.0)
+    neg = alphas * ((x - abs(x)) / 2.0)
+    return pos + neg
+'''
+
+
 def dropout(rng, values, p):
     srng = theano.tensor.shared_randomstreams.RandomStreams(rng.randint(999999))
     mask = srng.binomial(n=1, p=p, size=values.shape, dtype=theano.config.floatX)

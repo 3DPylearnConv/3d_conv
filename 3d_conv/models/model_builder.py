@@ -8,12 +8,13 @@ import theano.tensor as T
 
 from theano.tensor.nnet.conv3d2d import *
 
-from layers.hidden_layer import *
 from layers.conv_layer_3d import *
-from layers.layer_utils import *
-from layers.recon_layer import *
 from layers.flatten_layer import *
+from layers.hidden_layer import *
+from layers.layer_utils import *
 from layers.logistic_regression_layer import *
+from layers.max_pool_layer_3d import *
+from layers.recon_layer import *
 
 from collections import namedtuple
 
@@ -48,6 +49,16 @@ class ModelBuilder():
             filter_shape=filter_shape,
             poolsize=(0, 0),
             drop=self.drop
+        )
+
+        self.layers.append(layer)
+
+    def add_max_pool_layer(self, downsample_factor=2, ignore_border=False):
+        layer = MaxPoolLayer3D(
+            input=self.layers[-1].output,
+            image_shape=self.layers[-1].output_shape,
+            ds=downsample_factor,
+            ignore_border=ignore_border
         )
 
         self.layers.append(layer)
