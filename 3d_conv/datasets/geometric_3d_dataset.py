@@ -14,7 +14,6 @@ class Geometric3DDataset:
     HALF_COMPLETION_TASK = 2
 
     def __init__(self,
-                 batch_size=20,
                  patch_size=32,
                  task=CLASSIFICATION_TASK,
                  centered=True):
@@ -22,10 +21,27 @@ class Geometric3DDataset:
             raise NotImplementedError
 
         self.num_labels = 3  # used only for classification. TODO: find a more elegant way rather than hard-coding this
-        self.batch_size = batch_size
         self.patch_size = patch_size
         self.task = task
         self.centered = centered
+
+    def iterator(self, mode=None, batch_size=None, num_batches=None,
+                 topo=None, targets=None, rng=None, data_specs=None,
+                 return_tuple=False, type="default"):
+        return Geometric3dIterator(patch_size=self.patch_size, task=self.task, centered=self.centered, num_labels=self.num_labels, batch_size=batch_size, num_batches=num_batches)
+
+
+class Geometric3dIterator():
+    def __init__(self, patch_size, task, centered, num_labels, batch_size, num_batches):
+        self.patch_size = patch_size
+        self.task = task
+        self.centered = centered
+        self.num_labels = num_labels
+        self.batch_size = batch_size
+        self.num_batches = num_batches
+
+    def __iter__(self):
+        return self
 
     def __generate_solid_figures(self, geometry_types):
 
@@ -35,10 +51,10 @@ class Geometric3DDataset:
             if self.task == Geometric3DDataset.HALF_COMPLETION_TASK:
                 x0 = (self.patch_size-1)/2
                 # generate 2 numbers in the range [0, self.patch_size-1)
-                (y0, z0) = np.random.rand(2)*(self.patch_size-1)
+                (y0, z0) = np.random.rand(2) * (self.patch_size-1)
             else:
                 # generate 3 numbers in the range [0, self.patch_size-1)
-                (x0, y0, z0) = np.random.rand(3)*(self.patch_size-1)
+                (x0, y0, z0) = np.random.rand(3) * (self.patch_size-1)
 
         solid_figures = np.zeros((self.batch_size, self.patch_size, 1, self.patch_size, self.patch_size),
                                  dtype=np.bool)
@@ -46,7 +62,7 @@ class Geometric3DDataset:
         for i in xrange(self.batch_size):
             # radius is a random number in [3, self.patch_size/2)
             radius = (self.patch_size/2 - 3) * np.random.rand() + 3
-            
+
             # bounding box values for optimization
             x_min = int(max(math.ceil(x0-radius), 0))
             y_min = int(max(math.ceil(y0-radius), 0))
@@ -84,7 +100,7 @@ class Geometric3DDataset:
         Takes a 5-d boolean numpy array representing batches of 3-d data in BZCXY format.
         Returns a 5-d array of the same shape, containing only one "on" z value (the one with the lowest index) per each (x, y) pair.
         """
-        kinect_result = np.zeros(solid_figures.shape, dtype=np.bool_)
+        kinect_result = np.zeros(solid_figures.shape, dtype=np.bool)
         for i in xrange(self.batch_size):
             for x, y in itertools.product(*map(xrange, (self.patch_size, self.patch_size))):
                 for z in xrange(self.patch_size):
@@ -99,7 +115,7 @@ class Geometric3DDataset:
             one_hot_matrix[i, label] = 1
         return one_hot_matrix
 
-    def next_batch(self):
+    def next(self):
         if self.task == Geometric3DDataset.CLASSIFICATION_TASK:
             # TODO: allow users to specify how they want the classes to be distributed.
             # Currently using same probability for each class
@@ -117,4 +133,6 @@ class Geometric3DDataset:
             # split the volume in halves in the x direction
             data = temp[:, :, :, :int(self.patch_size/2), :]
             labels = temp[:, :, :, int(self.patch_size/2):, :]
+        else:
+            raise NotImplementedError
         return data, labels
