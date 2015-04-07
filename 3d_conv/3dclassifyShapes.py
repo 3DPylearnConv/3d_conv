@@ -26,6 +26,7 @@ from visualization.visualize import *
 
 from layers.hidden_layer import *
 from layers.conv_layer_3d import *
+from layers.max_pool_layer_3d import *
 from layers.layer_utils import *
 from layers.recon_layer import *
 
@@ -53,13 +54,11 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     n_train_batches = 20
     n_valid_batches = 10
     n_test_batches = 5
-    batch_size = 10
+    batch_size = 20
 
-    downsample_factor = 8
-    xdim = 256/downsample_factor
-    ydim = 256/downsample_factor
-    zdim = 256/downsample_factor
-    convsize = 3
+    xdim = 28
+    ydim = 28
+    zdim = 28
 
     drop = T.iscalar('drop')
 
@@ -81,10 +80,13 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     #layer0_input = x.reshape((batch_size, zdim, 1, ydim, xdim))
 
 
+
+    nkerns = [8, 16]
     # Construct the first convolutional pooling layer:
     # filtering reduces the image size to (28-5+1 , 28-5+1) = (24, 24)
     # maxpooling reduces this further to (24/2, 24/2) = (12, 12)
     # 4D output tensor is thus of shape (batch_size, nkerns[0], 12, 12)
+    convsize = 3
     layer0 = ConvLayer3D(
         rng,
         input=x,
@@ -93,58 +95,81 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         poolsize=(0, 0), drop=drop
     )
 
+    newZ = zdim - convsize + 1
+    newX = xdim - convsize + 1
+    newY = ydim - convsize + 1
+
+    layer0_5 = MaxPoolLayer3D(
+        input=layer0.output,
+        input_shape=(batch_size, newZ, nkerns[0], newX, newY),
+        ds=2,
+        ignore_border=False
+    )
+
     # Construct the second convolutional pooling layer
     # filtering reduces the image size to (12-5+1, 12-5+1) = (8, 8)
     # maxpooling reduces this further to (8/2, 8/2) = (4, 4)
     # 4D output tensor is thus of shape (nkerns[0], nkerns[1], 4, 4)
 
-    newZ = zdim - convsize + 1
-    newX = xdim - convsize + 1
-    newY = ydim - convsize + 1
-
+    newZ /= 2
+    newX /= 2
+    newY /= 2
 
     layer1 = ConvLayer3D(
         rng,
-        input=layer0.output,
+        input=layer0_5.output,
         image_shape=(batch_size, newZ, nkerns[0], newX, newY),
         filter_shape=(nkerns[1], convsize, nkerns[0], convsize, convsize),
         poolsize=(0, 0), drop=drop
+    )
+
+    newZ = newZ - convsize + 1
+    newX = newX - convsize + 1
+    newY = newY - convsize + 1
+
+    layer1_5 = MaxPoolLayer3D(
+        input=layer0.output,
+        input_shape=(batch_size, newZ, nkerns[0], newX, newY),
+        ds=2,
+        ignore_border=False
     )
 
     # the HiddenLayer being fully-connected, it operates on 2D matrices of
     # shape (batch_size, num_pixels) (i.e matrix of rasterized images).
     # This will generate a matrix of shape (batch_size, nkerns[1] * 4 * 4),
     # or (500, 50 * 4 * 4) = (500, 800) with the default values.
-    layer2_input = layer1.output.flatten(2)
+    layer2_input = layer1_5.output.flatten(2)
 
-    newZ = newZ - convsize + 1
-    newX = newX - convsize + 1
-    newY = newY - convsize + 1
+    newZ /= 2
+    newX /= 2
+    newY /= 2
 
     # construct a fully-connected sigmoidal layer
+    '''
     layer2 = HiddenLayer(
         rng,
         input=layer2_input,
         n_in=nkerns[1] * newZ * newX * newY,
-        n_out=400,
+        n_out=10,
         activation=relu, drop=drop
     )
+    '''
 
     # classify the values of the fully-connected sigmoidal layer
-    layer3 = LogisticRegression(input=layer2.output, n_in=400, n_out=3)
+    layer2 = LogisticRegression(input=layer2_input, n_in=nkerns[1] * newZ * newX * newY, n_out=3)
 
     # create a list of all model parameters to be fit by gradient descent
-    params = layer3.params + layer2.params + layer1.params + layer0.params
+    params = layer2.params + layer1_5.params + layer1.params + layer0_5.params + layer0.params
 
     #L1 = abs(layer0.W).sum() + abs(layer1.W).sum() + abs(layer2.W).sum() + abs(layer3.W).sum()
 
     # the cost we minimize during training is the NLL of the model
-    cost = layer3.negative_log_likelihood(y)
+    cost = layer2.negative_log_likelihood(y)
 
     # create a function to compute the mistakes that are made by the model
     test_model = theano.function(
         [x,y],
-        layer3.errors(y),
+        layer2.errors(y),
         givens={
             drop: numpy.cast['int32'](0)
         }, allow_input_downcast=True
@@ -152,7 +177,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
     validate_model = theano.function(
         [x,y],
-        layer3.errors(y),
+        layer2.errors(y),
         givens={
 
             drop: numpy.cast['int32'](0)
@@ -219,7 +244,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     done_looping = False
 
     models_dir = '/srv/3d_conv_data/ModelNet10'
-    patch_size = 256
+    patch_size = 28
 
     train_dataset = Geometric3DDataset(patch_size=patch_size,
                                        task=Geometric3DDataset.CLASSIFICATION_TASK,
@@ -312,7 +337,6 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                     numpy.save('dropout2layer0', layer0.params)
                     numpy.save('dropout2layer1', layer1.params)
                     numpy.save('dropout2layer2', layer2.params)
-                    numpy.save('dropout2layer3', layer3.params)
 
 
                     for j in xrange(n_test_batches):
