@@ -3,3 +3,4 @@
 .idea/
 data/ModelNet10/*
 binvox-rw-py/*
+.DS_Store

@@ -120,7 +120,7 @@ class Geometric3dIterator():
             # TODO: allow users to specify how they want the classes to be distributed.
             # Currently using same probability for each class
             geometry_types = np.random.randint(0, self.num_labels, self.batch_size)
-            labels = self.__one_hot(geometry_types)
+            labels = geometry_types  #self.__one_hot(geometry_types)
             data = self.__generate_solid_figures(
                 geometry_types=geometry_types)
         elif self.task == Geometric3DDataset.KINECT_COMPLETION_TASK:

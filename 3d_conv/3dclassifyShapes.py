@@ -131,7 +131,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     )
 
     # classify the values of the fully-connected sigmoidal layer
-    layer3 = LogisticRegression(input=layer2.output, n_in=400, n_out=10)
+    layer3 = LogisticRegression(input=layer2.output, n_in=400, n_out=3)
 
     # create a list of all model parameters to be fit by gradient descent
     params = layer3.params + layer2.params + layer1.params + layer0.params
