@@ -150,7 +150,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     n_train_batches = 20
     n_valid_batches = 5
     n_test_batches = 5
-    batch_size = 20
+    batch_size = 25
 
     downsample_factor = 16
     xdim = 256/downsample_factor
@@ -227,24 +227,23 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         rng,
         input=layer2_input,
         n_in=nkerns[1] * zdim * ydim * xdim,
-        n_out=100,
+        n_out=1500,
         activation=relu, drop=drop
     )
     layer3 = HiddenLayer(
         rng,
         input=layer2.output,
-        n_in=100,
-        n_out=100,
+        n_in=1500,
+        n_out=1500,
         activation=relu, drop=drop
     )
-
 
 
     # classify the values of the fully-connected sigmoidal layer
     layer4 = reconLayer(
         rng,
         input=layer3.output,
-        n_in=100,
+        n_in=1500,
         n_out=recon_size,
         activation=T.nnet.sigmoid
     )
