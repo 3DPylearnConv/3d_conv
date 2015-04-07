@@ -221,20 +221,17 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     models_dir = '/srv/3d_conv_data/ModelNet10'
     patch_size = 256
 
-    train_dataset = Geometric3DDataset(self,
-                                       patch_size=patch_size,
+    train_dataset = Geometric3DDataset(patch_size=patch_size,
                                        task=Geometric3DDataset.CLASSIFICATION_TASK,
                                        centered=True)
-    test_dataset = Geometric3DDataset(self,
-                                      patch_size=patch_size,
+    test_dataset = Geometric3DDataset(patch_size=patch_size,
                                       task=Geometric3DDataset.CLASSIFICATION_TASK,
                                       centered=True)
-    validation_dataset = Geometric3DDataset(self,
-                                            patch_size=patch_size,
+    validation_dataset = Geometric3DDataset(patch_size=patch_size,
                                             task=Geometric3DDataset.CLASSIFICATION_TASK,
                                             centered=True)
 
-    categories = train_dataset.get_categories()
+    #categories = train_dataset.get_categories()
 
     while (epoch_count < n_epochs) and (not done_looping):
 
@@ -252,7 +249,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
             if mini_batch_count % 100 == 0:
                 print 'training @ iter = ', mini_batch_count
 
-            mini_batch_x, mini_batch_y = train_iterator.next(categories)
+            mini_batch_x, mini_batch_y = train_iterator.next()
 
             mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
 
@@ -270,7 +267,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                 demo_x = 0
                 demo_y = 0
                 for i in xrange(n_valid_batches):
-                    mini_batch_x, mini_batch_y = validation_iterator.next(categories)
+                    mini_batch_x, mini_batch_y = validation_iterator.next()
                     mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
 
 
@@ -319,7 +316,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
 
                     for j in xrange(n_test_batches):
-                        batch_x, batch_y = test_iterator.next(categories)
+                        batch_x, batch_y = test_iterator.next()
                         batch_x = downscale_3d(batch_x, downsample_factor)
 
                         test_losses += test_model(batch_x, batch_y)
