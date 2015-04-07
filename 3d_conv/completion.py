@@ -351,7 +351,6 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     test_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='test')
     validation_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='train')
 
-    categories = train_dataset.get_categories()
     epoch_count = 0
 
     while (epoch_count < n_epochs) and (not done_looping):
@@ -376,6 +375,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
             mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
 
             cost_ij = train_model(mini_batch_x, mini_batch_y)
+            print cost_ij
 
             if (mini_batch_count + 1) % validation_frequency == 0:
 
