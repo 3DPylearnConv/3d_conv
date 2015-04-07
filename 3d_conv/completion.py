@@ -407,7 +407,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                 # get 1 example for demonstrating the model:
 
 
-                if epoch > 2:
+                if epoch_count > 2:
                     mini_batch_x, mini_batch_y = validation_iterator.next()
                     mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
                     mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
@@ -440,7 +440,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                         answer = answer.reshape(full_dimension,recon_size,full_dimension)
 
                         toSave = [given, result, answer]
-                        output = open("shape%depoch%d" % (epoch, i), 'wb')
+                        output = open("shape%depoch%d.pkl" % (epoch, i), 'wb')
                         cPickle.dump(toSave,output)
                         output.close()
 

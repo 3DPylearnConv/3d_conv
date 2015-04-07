@@ -110,7 +110,7 @@ class ModelNetIterator():
 
     def next(self):
 
-        batch_indices = np.random.random_integers(0, self.dataset.get_num_examples(), self.batch_size)
+        batch_indices = np.random.random_integers(0, self.dataset.get_num_examples()-1, self.batch_size)
         batch_indices.sort()
 
 
