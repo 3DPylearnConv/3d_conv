@@ -26,6 +26,7 @@ from visualization.visualize import *
 from layers.hidden_layer import *
 from layers.conv_layer_3d import *
 from layers.layer_utils import *
+from layers.layer_utils import downscale_3d
 
 
 from matplotlib import pyplot as plt
