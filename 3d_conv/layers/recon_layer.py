@@ -40,6 +40,13 @@ class ReconLayer(object):
         cost = T.mean(L)
         return cost
 
+    def single_pixel_cost(self, y):
+        #output shape: (10, 28, 32, 28, 28)
+        # return T.mean(T.nnet.categorical_crossentropy(self.output, y))
+        L = - T.sum(y * T.log(self.output[:, 14, :, 14, 14]) + (1 - y) * T.log(1 - self.output[:, 14, :, 14, 14]), axis=1)
+        cost = T.mean(L)
+        return cost
+
     def errors(self, y):
         binarizedoutput = T.round(self.output)
         errRate = T.mean(T.neq(binarizedoutput, y))

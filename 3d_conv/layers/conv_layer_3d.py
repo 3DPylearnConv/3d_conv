@@ -91,3 +91,23 @@ class ConvLayer3D(Layer):
         # store parameters of this layer
         self.params = [self.W, self.b]
 
+    def single_pixel_cost(self, y):
+
+        output = self.output[:, 14, :, 14, 14]
+        L = T.abs_(T.sum(y - output))
+        #mask = numpy.zeros((10, 28, 32, 28, 28))
+        #mask[:, 14, :, 14, 14] = 1
+        #output shape: (10, 28, 32, 28, 28)
+        # return T.mean(T.nnet.categorical_crossentropy(self.output, y))
+        #L = - T.sum(y.dimshuffle(0, 'x', 1, 'x', 'x') * T.log(self.output) + (1 - y.dimshuffle(0, 'x', 1, 'x', 'x')) * T.log(1 - self.output))
+        return L
+
+    def errors(self, y):
+        binarizedoutput = T.round(self.output)
+        errRate = T.mean(T.neq(binarizedoutput, T.round(y.dimshuffle(0, 'x', 1, 'x', 'x'))))
+
+        return errRate
+
+    def return_output(self):
+        return self.output
+
