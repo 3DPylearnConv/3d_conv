@@ -384,7 +384,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         rng,
         input=layer3.output,
         n_in=2000,
-        n_out=recon_output_size,
+        n_out=recon_size,
         activation=T.nnet.sigmoid
     )
     # the cost we minimize during training is the NLL of the model

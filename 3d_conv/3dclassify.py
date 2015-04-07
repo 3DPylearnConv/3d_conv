@@ -78,7 +78,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     # Reshape matrix of rasterized images of shape (batch_size, 28 * 28)
     # to a 4D tensor, compatible with our LeNetConvPoolLayer
     # (28, 28) is the size of MNIST images.
-    #layer0_input = x.reshape((batch_size, zdim, 1, ydim, xdim))
+    layer0_input = x.reshape((batch_size, zdim, 1, ydim, xdim))
 
 
     # Construct the first convolutional pooling layer:
@@ -87,7 +87,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     # 4D output tensor is thus of shape (batch_size, nkerns[0], 12, 12)
     layer0 = ConvLayer3D(
         rng,
-        input=x,
+        input=layer0_input,
         image_shape=(batch_size, zdim, 1, xdim, ydim),
         filter_shape=(nkerns[0], convsize, 1, convsize, convsize),
         poolsize=(0, 0), drop=drop
@@ -225,7 +225,6 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     test_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='test')
     validation_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='train')
 
-    categories = train_dataset.get_categories()
 
     while (epoch_count < n_epochs) and (not done_looping):
 
@@ -234,7 +233,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
         train_iterator = train_dataset.iterator(batch_size=batch_size,
                                                 num_batches=n_train_batches,
-                                                mode='even_shuffled_sequential', type='classify')
+                                                mode='even_shuffled_sequential', type='notClassify')
 
         for minibatch_index in xrange(n_train_batches):
 
@@ -243,9 +242,10 @@ def evaluate(learning_rate=0.001, n_epochs=200,
             if mini_batch_count % 100 == 0:
                 print 'training @ iter = ', mini_batch_count
 
-            mini_batch_x, mini_batch_y = train_iterator.next(categories)
+            mini_batch_x, mini_batch_y = train_iterator.next()
 
             mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
+            mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
 
             cost_ij = train_model(mini_batch_x, mini_batch_y)
 
@@ -253,7 +253,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
                 validation_iterator = validation_dataset.iterator(batch_size=batch_size,
                                                                   num_batches=n_valid_batches,
-                                                                  mode='even_shuffled_sequential', type = 'classify')
+                                                                  mode='even_shuffled_sequential', type = 'notClassify')
 
                 # compute zero-one loss on validation set
                 validation_losses = 0
@@ -261,9 +261,9 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                 demo_x = 0
                 demo_y = 0
                 for i in xrange(n_valid_batches):
-                    mini_batch_x, mini_batch_y = validation_iterator.next(categories)
+                    mini_batch_x, mini_batch_y = validation_iterator.next()
                     mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
-
+                    mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
 
                     validation_losses += validate_model(mini_batch_x, mini_batch_y)
                     if i == 0:
@@ -281,6 +281,12 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                 # get 1 example for demonstrating the model:
 
 
+                if epoch > 2:
+                    mini_batch_x, mini_batch_y = validation_iterator.next()
+                    mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
+                    mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
+
+                    img = demonstrate_model(mini_batch_x, mini_batch_y)
 
 
 
@@ -301,7 +307,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
                     test_iterator = test_dataset.iterator(batch_size=batch_size,
                                                       num_batches=n_test_batches,
-                                                      mode='even_shuffled_sequential', type='classify')
+                                                      mode='even_shuffled_sequential', type='notClassify')
 
                     numpy.save('dropout2layer0', layer0.params)
                     numpy.save('dropout2layer1', layer1.params)
@@ -310,11 +316,14 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
 
                     for j in xrange(n_test_batches):
-                        batch_x, batch_y = test_iterator.next(categories)
+                        batch_x, batch_y = test_iterator.next()
                         batch_x = downscale_3d(batch_x, downsample_factor)
+                        batch_y = downscale_3d(batch_y, downsample_factor)
 
                         test_losses += test_model(batch_x, batch_y)
                         test_score = test_losses/n_test_batches
+
+
 
                     print(('     epoch %i, minibatch %i/%i, test error of '
                            'best model %f %%') %
