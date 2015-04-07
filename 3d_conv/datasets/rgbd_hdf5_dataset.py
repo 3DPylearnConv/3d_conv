@@ -43,7 +43,7 @@ class GaussianNoisePostProcessor():
 class RGBD_HDF5_Dataset(pylearn2.datasets.dataset.Dataset):
 
     def __init__(self, topo_view_key, y_key, hdf5_filepath, patch_size=72):
-        self.h5py_dataset = h5py.File(hdf5_filepath, 'r')
+        self.h5py_dataset = h5py.File(hdf5_filepath)
 
         #our topological view is rgbd
         self.topo_view = self.h5py_dataset[topo_view_key]
@@ -148,20 +148,21 @@ class HDF5_Iterator():
 
     def next(self):
 
-        batch_indices = self._subset_iterator.next()
+        #batch_indices = self._subset_iterator.next()
+        batch_indices = np.random.random_integers(0, self.dataset.get_num_examples()-1, self.batch_size)
 
-        if isinstance(batch_indices, slice):
-            batch_indices = np.array(range(batch_indices.start, batch_indices.stop))
+        # if isinstance(batch_indices, slice):
+        #     batch_indices = np.array(range(batch_indices.start, batch_indices.stop))
 
         # if we are using a shuffled sequential subset iterator
         # then next_index will be something like:
         # array([13713, 14644, 30532, 32127, 35746, 44163, 48490, 49363, 52141, 52216])
         # hdf5 can only support this sort of indexing if the array elements are
         # in increasing order
-        batch_size = 0
-        if isinstance(batch_indices, np.ndarray):
-            batch_indices.sort()
-            batch_size = len(batch_indices)
+        # batch_size = 0
+        # if isinstance(batch_indices, np.ndarray):
+        #     batch_indices.sort()
+        batch_size = self.batch_size
 
         num_uvd_per_rgbd = self.dataset.h5py_dataset['uvd'].shape[1]
         num_grasp_types = self.dataset.h5py_dataset['num_grasp_type'][0]

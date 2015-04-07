@@ -2,27 +2,18 @@
 Shape Reconstruction
 Modified version of deeplearning.net tutorial for 3d data.
 """
-import cPickle
-import gzip
+
 import os
 import sys
 import time
-import scipy.misc
-import os
-import sys
-import time
+import random
 
 import numpy
-
 import theano
-import theano.tensor as T
-from theano.tensor.signal import downsample
-from theano.tensor.nnet import conv
 from theano.tensor.nnet.conv3d2d import *
 
 from logistic_sgd import LogisticRegression
-from datasets.model_net_dataset import ModelNetDataset
-from visualization.visualize import *
+from datasets.melonoma_dataset import MelonomaDataset
 
 from layers.hidden_layer import *
 from layers.conv_layer_3d import *
@@ -63,10 +54,10 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
     n_train_batches = 20
     n_valid_batches = 10
     n_test_batches = 5
-    batch_size = 10
+    batch_size = 8
 
-    downsample_factor = 8
-    xdim = 256/downsample_factor
+    downsample_factor = 1
+    xdim = 6/downsample_factor
     ydim = 256/downsample_factor
     zdim = 256/downsample_factor
     convsize = 3
@@ -136,12 +127,12 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
         rng,
         input=layer2_input,
         n_in=nkerns[1] * newZ * newX * newY,
-        n_out=400,
+        n_out=50,
         activation=relu, drop=drop
     )
 
     # classify the values of the fully-connected sigmoidal layer
-    layer3 = LogisticRegression(input=layer2.output, n_in=400, n_out=10)
+    layer3 = LogisticRegression(input=layer2.output, n_in=50, n_out=2)
 
     # create a list of all model parameters to be fit by gradient descent
     params = layer3.params + layer2.params + layer1.params + layer0.params
@@ -228,14 +219,16 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
     epoch_count = 0
     done_looping = False
 
-    models_dir = '/srv/3d_conv_data/ModelNet10'
-    patch_size = 256
+    data_dir = '/srv/3d_conv_data/melanoma/suborder-5/'
+    filenames = random.shuffle([data_dir + filename for filename in os.listdir(data_dir) if ".h5" in filename])
 
-    train_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='train')
-    test_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='test')
-    validation_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='train')
+    train_filenames = filenames[0:int(.8*len(filenames))]
+    test_filenames = filenames[int(.8*len(filenames)):int(.9*len(filenames))]
+    valid_filenames = filenames[int(.9*len(filenames)):]
 
-    categories = train_dataset.get_categories()
+    train_dataset = MelonomaDataset(data_dir, examples=train_filenames)
+    test_dataset = MelonomaDataset(data_dir, examples=test_filenames)
+    validation_dataset = MelonomaDataset(data_dir, examples=valid_filenames)
 
     validation_error = []
     model_start_time = pretty_print_time()
@@ -256,9 +249,7 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
             if mini_batch_count % 100 == 0:
                 print 'training @ iter = ', mini_batch_count
 
-            mini_batch_x, mini_batch_y = train_iterator.next(categories)
-
-            mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
+            mini_batch_x, mini_batch_y = train_iterator.next()
 
             cost_ij = train_model(mini_batch_x, mini_batch_y)
 
@@ -271,17 +262,10 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
                 # compute zero-one loss on validation set
                 validation_losses = 0
 
-                demo_x = 0
-                demo_y = 0
                 for i in xrange(n_valid_batches):
-                    mini_batch_x, mini_batch_y = validation_iterator.next(categories)
-                    mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
-
+                    mini_batch_x, mini_batch_y = validation_iterator.next()
 
                     validation_losses += validate_model(mini_batch_x, mini_batch_y)
-                    if i == 0:
-                        demo_x = mini_batch_x
-                        demo_y = mini_batch_y
 
                 this_validation_loss = validation_losses/n_valid_batches
                 validation_error.append(this_validation_loss)
@@ -324,8 +308,7 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
                     numpy.save(save_dir + '/validation_error', numpy.array(validation_error))
 
                     for j in xrange(n_test_batches):
-                        batch_x, batch_y = test_iterator.next(categories)
-                        batch_x = downscale_3d(batch_x, downsample_factor)
+                        batch_x, batch_y = test_iterator.next()
 
                         test_losses += test_model(batch_x, batch_y)
                         test_score = test_losses/n_test_batches
