@@ -86,7 +86,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     # filtering reduces the image size to (28-5+1 , 28-5+1) = (24, 24)
     # maxpooling reduces this further to (24/2, 24/2) = (12, 12)
     # 4D output tensor is thus of shape (batch_size, nkerns[0], 12, 12)
-    convsize = 3
+    convsize = 5
     layer0 = ConvLayer3D(
         rng,
         input=x,
@@ -115,6 +115,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     newX /= 2
     newY /= 2
 
+    convsize = 3
     layer1 = ConvLayer3D(
         rng,
         input=layer0_5.output,
@@ -128,7 +129,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     newY = newY - convsize + 1
 
     layer1_5 = MaxPoolLayer3D(
-        input=layer0.output,
+        input=layer1.output,
         input_shape=(batch_size, newZ, nkerns[0], newX, newY),
         ds=2,
         ignore_border=False
@@ -143,17 +144,6 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     newZ /= 2
     newX /= 2
     newY /= 2
-
-    # construct a fully-connected sigmoidal layer
-    '''
-    layer2 = HiddenLayer(
-        rng,
-        input=layer2_input,
-        n_in=nkerns[1] * newZ * newX * newY,
-        n_out=10,
-        activation=relu, drop=drop
-    )
-    '''
 
     # classify the values of the fully-connected sigmoidal layer
     layer2 = LogisticRegression(input=layer2_input, n_in=nkerns[1] * newZ * newX * newY, n_out=3)
@@ -276,8 +266,6 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
             mini_batch_x, mini_batch_y = train_iterator.next()
 
-            mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
-
             cost_ij = train_model(mini_batch_x, mini_batch_y)
 
             if (mini_batch_count + 1) % validation_frequency == 0:
@@ -293,7 +281,6 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                 demo_y = 0
                 for i in xrange(n_valid_batches):
                     mini_batch_x, mini_batch_y = validation_iterator.next()
-                    mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
 
 
                     validation_losses += validate_model(mini_batch_x, mini_batch_y)
@@ -341,7 +328,6 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
                     for j in xrange(n_test_batches):
                         batch_x, batch_y = test_iterator.next()
-                        batch_x = downscale_3d(batch_x, downsample_factor)
 
                         test_losses += test_model(batch_x, batch_y)
                         test_score = test_losses/n_test_batches
