@@ -20,6 +20,7 @@ from theano.tensor.nnet import conv
 from theano.tensor.nnet.conv3d2d import *
 
 from logistic_sgd import LogisticRegression
+from datasets.model_net_dataset import ModelNetDataset
 
 
 from matplotlib import pyplot as plt
