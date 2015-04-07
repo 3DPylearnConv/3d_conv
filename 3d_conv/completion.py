@@ -501,7 +501,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
         train_iterator = train_dataset.iterator(batch_size=batch_size,
                                                 num_batches=n_train_batches,
-                                                mode='even_shuffled_sequential', type='notClassify')
+                                                mode='even_shuffled_sequential', type='default')
 
         for minibatch_index in xrange(n_train_batches):
 
@@ -521,7 +521,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
                 validation_iterator = validation_dataset.iterator(batch_size=batch_size,
                                                                   num_batches=n_valid_batches,
-                                                                  mode='even_shuffled_sequential', type = 'notClassify')
+                                                                  mode='even_shuffled_sequential', type = 'default')
 
                 # compute zero-one loss on validation set
                 validation_losses = 0
@@ -606,7 +606,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
                     test_iterator = test_dataset.iterator(batch_size=batch_size,
                                                       num_batches=n_test_batches,
-                                                      mode='even_shuffled_sequential', type='notClassify')
+                                                      mode='even_shuffled_sequential', type='default')
 
 
 
