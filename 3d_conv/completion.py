@@ -492,6 +492,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     validation_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='train')
 
     categories = train_dataset.get_categories()
+    epoch_count = 0
 
     while (epoch_count < n_epochs) and (not done_looping):
 
