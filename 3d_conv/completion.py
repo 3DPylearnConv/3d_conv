@@ -156,9 +156,10 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     xdim = 256/downsample_factor
     ydim = 256/downsample_factor
     ydim = ydim/2
-    recon_size = ydim*xdim*zdim
     zdim = 256/downsample_factor
     convsize = 3
+    recon_size = ydim*xdim*zdim
+
     # allocate symbolic variables for the data
     index = T.lscalar()  # index to a [mini]batch
 
