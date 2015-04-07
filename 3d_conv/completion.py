@@ -156,7 +156,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     xdim = 256/downsample_factor
     ydim = 256/downsample_factor
     ydim = ydim/2
-    recon_size = ydim*ydim*ydim
+    recon_size = ydim*xdim*zdim
     zdim = 256/downsample_factor
     convsize = 3
     # allocate symbolic variables for the data
@@ -226,14 +226,14 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         rng,
         input=layer2_input,
         n_in=nkerns[1] * zdim * ydim * xdim,
-        n_out=1500,
+        n_out=100,
         activation=relu, drop=drop
     )
     layer3 = HiddenLayer(
         rng,
         input=layer2.output,
-        n_in=1500,
-        n_out=2000,
+        n_in=100,
+        n_out=100,
         activation=relu, drop=drop
     )
 
@@ -243,7 +243,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     layer4 = reconLayer(
         rng,
         input=layer3.output,
-        n_in=2000,
+        n_in=100,
         n_out=recon_size,
         activation=T.nnet.sigmoid
     )
