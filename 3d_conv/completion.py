@@ -484,7 +484,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                           (epoch_count, minibatch_index + 1, n_train_batches,
                            test_score * 100.))
 
-            if patience <= iter:
+            if patience <= mini_batch_count:
                 done_looping = True
                 break
 
