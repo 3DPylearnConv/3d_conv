@@ -152,7 +152,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     n_test_batches = 5
     batch_size = 20
 
-    downsample_factor = 32
+    downsample_factor = 16
     xdim = 256/downsample_factor
     ydim = 256/downsample_factor
     ydim = ydim/2
