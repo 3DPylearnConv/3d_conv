@@ -19,6 +19,7 @@ def showShapes(num):
 
     train_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='train')
     categories = train_dataset.get_categories()
+    print categories
 
 
 
