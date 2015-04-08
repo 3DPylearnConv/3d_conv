@@ -147,10 +147,10 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     """
 
     rng = numpy.random.RandomState(23455)
-    n_train_batches = 20
-    n_valid_batches = 5
-    n_test_batches = 5
-    batch_size = 25
+    n_train_batches = 50
+    n_valid_batches = 3
+    n_test_batches = 3
+    batch_size = 40
 
     downsample_factor = 16
     xdim = 256/downsample_factor
@@ -228,14 +228,14 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         rng,
         input=layer2_input,
         n_in=nkerns[1] * zdim * ydim * xdim,
-        n_out=1500,
+        n_out=1800,
         activation=relu, drop=drop
     )
     layer3 = HiddenLayer(
         rng,
         input=layer2.output,
-        n_in=1500,
-        n_out=1500,
+        n_in=1800,
+        n_out=1800,
         activation=relu, drop=drop
     )
 
@@ -244,7 +244,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     layer4 = reconLayer(
         rng,
         input=layer3.output,
-        n_in=1500,
+        n_in=1800,
         n_out=recon_size,
         activation=T.nnet.sigmoid
     )
