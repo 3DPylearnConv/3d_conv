@@ -35,7 +35,6 @@ def showShapes(num):
 
         toPlot = mini_batch_x[example]
         toPlot = toPlot.reshape(16,16,16)
-        print toPlot.shape
         x,y,z = toPlot.nonzero()
         fig = plt.figure()
         ax = fig.add_subplot(111,projection='3d')
@@ -44,7 +43,7 @@ def showShapes(num):
         ax.plot([dimension],[dimension],[dimension],'w')
 
 
-        ax.scatter(x,-y,z, c= 'blue')
+        ax.scatter(x,y,z, c= 'blue')
 
 
         ax.set_zlim3d(0,dimension)
