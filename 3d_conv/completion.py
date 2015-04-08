@@ -446,7 +446,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                         answer = answer.reshape(full_dimension,full_dimension/2,full_dimension)
 
                         toSave = [given, result, answer]
-                        output = open("shape%depoch%d.pkl" % (epoch_count, i), 'wb')
+                        output = open("Ashape%depoch%d.pkl" % (epoch_count, i), 'wb')
                         cPickle.dump(toSave,output)
                         output.close()
 
