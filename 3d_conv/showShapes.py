@@ -34,6 +34,7 @@ def showShapes(num):
 
 
         toPlot = mini_batch_x[example]
+        print toPlot.shape
         x,y,z = toPlot.nonzero()
         fig = plt.figure()
         ax = fig.add_subplot(111,projection='3d')
