@@ -34,6 +34,7 @@ def showShapes(num):
 
 
         toPlot = mini_batch_x[example]
+        toPlot = toPlot.reshape(16,16,16)
         print toPlot.shape
         x,y,z = toPlot.nonzero()
         fig = plt.figure()
