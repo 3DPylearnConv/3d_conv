@@ -341,7 +341,6 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     test_score = 0.
     start_time = time.clock()
 
-    epoch = 0
     done_looping = False
 
     models_dir = '/srv/3d_conv_data/ModelNet10'
@@ -440,7 +439,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                         answer = answer.reshape(full_dimension,full_dimension/2,full_dimension)
 
                         toSave = [given, result, answer]
-                        output = open("shape%depoch%d.pkl" % (epoch, i), 'wb')
+                        output = open("shape%depoch%d.pkl" % (epoch_count, i), 'wb')
                         cPickle.dump(toSave,output)
                         output.close()
 
