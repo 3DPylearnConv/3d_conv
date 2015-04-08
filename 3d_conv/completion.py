@@ -159,6 +159,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     zdim = 256/downsample_factor
     convsize = 3
     recon_size = ydim*xdim*zdim
+    full_dimension = 256/downsample_factor
 
     # allocate symbolic variables for the data
     index = T.lscalar()  # index to a [mini]batch
@@ -414,12 +415,11 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
                     img = demonstrate_model(mini_batch_x, mini_batch_y)
 
-                    full_dimension = recon_size * 2
 
                     for i in xrange(3):
 
 
-                        given = mini_batch_x[i,:].reshape(full_dimension,recon_size,full_dimension)
+                        given = mini_batch_x[i,:].reshape(full_dimension,full_dimension/2,full_dimension)
                         """
                         #print given
 
@@ -432,12 +432,12 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                         plt.show()
                         """
 
-                        result = img[i,:].reshape(full_dimension,recon_size,full_dimension)
+                        result = img[i,:].reshape(full_dimension,full_dimension/2,full_dimension)
 
 
 
                         answer = mini_batch_y[i,:]
-                        answer = answer.reshape(full_dimension,recon_size,full_dimension)
+                        answer = answer.reshape(full_dimension,full_dimension/2,full_dimension)
 
                         toSave = [given, result, answer]
                         output = open("shape%depoch%d.pkl" % (epoch, i), 'wb')
