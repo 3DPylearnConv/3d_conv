@@ -14,7 +14,7 @@ def showShapes(num):
 
     models_dir = '/srv/3d_conv_data/ModelNet10'
     patch_size = 256
-    downsample_factor=4
+    downsample_factor=16
 
 
     train_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='train')
