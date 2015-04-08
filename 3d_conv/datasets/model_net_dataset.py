@@ -129,8 +129,8 @@ class ModelNetIterator():
 
         patch_size = self.dataset.patch_size
 
-        batch_x = np.zeros((batch_size, patch_size/2, patch_size, patch_size, 1))
-        batch_y = np.zeros((batch_size, patch_size/2, patch_size, patch_size, 1))
+        batch_x = np.zeros((batch_size, patch_size, patch_size, patch_size/2, 1))
+        batch_y = np.zeros((batch_size, patch_size, patch_size, patch_size/2, 1))
 
         for i in range(len(batch_indices)):
             index = batch_indices[i]
