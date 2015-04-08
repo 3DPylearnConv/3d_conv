@@ -146,8 +146,8 @@ class ModelNetIterator():
             batch_y[i, :, :, :, 0][model.data[patch_size/2:, :, :]] = 1
 
         #make batch C01B rather than B01C
-        batch_x = batch_x.transpose(0, 3, 4, 1, 2)
-        batch_y = batch_y.transpose(0, 3, 4, 1, 2)
+        batch_x = batch_x.transpose(0, 3, 4, 2, 1)
+        batch_y = batch_y.transpose(0, 3, 4, 2, 1)
 
         #apply post processors to the patches
         for post_processor in self.iterator_post_processors:
