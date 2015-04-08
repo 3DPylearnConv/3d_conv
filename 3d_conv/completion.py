@@ -369,6 +369,8 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                 print 'training @ iter = ', mini_batch_count
 
             mini_batch_x, mini_batch_y = train_iterator.next()
+            mini_batch_x = mini_batch_x.transpose(0, 1, 2, 4, 3)
+            mini_batch_y = mini_batch_y.transpose(0, 1, 2, 4, 3)
 
             mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
             mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
@@ -388,6 +390,9 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                 demo_y = 0
                 for i in xrange(n_valid_batches):
                     mini_batch_x, mini_batch_y = validation_iterator.next()
+                    mini_batch_x = mini_batch_x.transpose(0, 1, 2, 4, 3)
+                    mini_batch_y = mini_batch_y.transpose(0, 1, 2, 4, 3)
+
                     mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
                     mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
 
@@ -409,6 +414,8 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
                 if epoch_count > 2:
                     mini_batch_x, mini_batch_y = validation_iterator.next()
+                    mini_batch_x = mini_batch_x.transpose(0, 1, 2, 4, 3)
+                    mini_batch_y = mini_batch_y.transpose(0, 1, 2, 4, 3)
                     mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
                     mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
 
@@ -469,6 +476,8 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
                     for j in xrange(n_test_batches):
                         batch_x, batch_y = test_iterator.next()
+                        batch_x = batch_x.transpose(0, 1, 2, 4, 3)
+                        batch_y = batch_y.transpose(0, 1, 2, 4, 3)
                         batch_x = downscale_3d(batch_x, downsample_factor)
                         batch_y = downscale_3d(batch_y, downsample_factor)
 
