@@ -14,7 +14,7 @@ def showShapes(num):
 
     models_dir = '/srv/3d_conv_data/ModelNet10'
     patch_size = 256
-    downsample_factor=16
+    downsample_factor=8
 
 
     train_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='train')
@@ -28,7 +28,7 @@ def showShapes(num):
     mini_batch_x, mini_batch_y = train_iterator.next(categories)
 
     mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
-    dimension = 16
+    dimension = 32
 
     for example in xrange(num):
 
