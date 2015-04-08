@@ -54,7 +54,7 @@ def downscale_3d(the_5d_input, downscale_factor):
                                             array_shape[3] / downscale_factor,
                                             downscale_factor,
                                             array_shape[4] / downscale_factor,
-                                            downscale_factor).mean(axis=(2, 5, 7))
+                                            downscale_factor).max(axis=(2, 5, 7))
 
 def rms_prop(cost, params, lr=0.001, rho=0.9, epsilon=1e-6):
     """
