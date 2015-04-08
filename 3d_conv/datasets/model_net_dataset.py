@@ -142,7 +142,7 @@ class ModelNetIterator():
             #batch_x[i, :, :, :, 0] = np.copy(np.zeros(model.data.shape))
             #batch_y[i, :, :, :, 0] = np.copy(np.zeros(model.data.shape))
 
-            batch_x[i, :, :, :, 0][model.data[:,:,patch_size/2]] = 1
+            batch_x[i, :, :, :, 0][model.data[:,:,:patch_size/2]] = 1
             batch_y[i, :, :, :, 0][model.data[:,:,patch_size/2:]] = 1
 
         #make batch C01B rather than B01C
