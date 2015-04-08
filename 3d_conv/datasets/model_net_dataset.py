@@ -30,6 +30,9 @@ class ModelNetDataset(pylearn2.datasets.dataset.Dataset):
             for file_name in os.listdir(models_dir + '/' + category + subdir):
                 if ".binvox" in file_name:
                     self.examples.append((models_dir + '/' + category + subdir + file_name, category))
+        import IPython
+        IPython.embed()
+        assert False
 
     def adjust_for_viewer(self, X):
         raise NotImplementedError
