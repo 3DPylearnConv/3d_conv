@@ -19,7 +19,6 @@ def showShapes(num):
 
     train_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='train')
     categories = train_dataset.get_categories()
-    print categories
 
 
 
@@ -50,7 +49,7 @@ def showShapes(num):
         ax.set_zlim3d(0,dimension)
         ax.set_xlim3d(0,dimension)
         ax.set_ylim3d(0,dimension)
-        print mini_batch_y[example]
+        print categories[mini_batch_y[example]]
 
         plt.show()
 
