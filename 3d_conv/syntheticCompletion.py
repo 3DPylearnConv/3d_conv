@@ -153,7 +153,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     n_test_batches = 3
     batch_size = 40
 
-    downsample_factor = 16
+
     xdim = 18
     ydim = 18
     ydim = ydim/2
@@ -350,13 +350,13 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
     train_dataset = Geometric3DDataset(patch_size=patch_size,
                                        task=Geometric3DDataset.HALF_COMPLETION_TASK,
-                                       centered=True)
+                                       centered=False)
     test_dataset = Geometric3DDataset(patch_size=patch_size,
                                       task=Geometric3DDataset.HALF_COMPLETION_TASK,
-                                      centered=True)
+                                      centered=False)
     validation_dataset = Geometric3DDataset(patch_size=patch_size,
                                             task=Geometric3DDataset.HALF_COMPLETION_TASK,
-                                            centered=True)
+                                            centered=False)
 
     epoch_count = 0
 
