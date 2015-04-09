@@ -378,8 +378,8 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
             mini_batch_x, mini_batch_y = train_iterator.next()
 
-            mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
-            mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
+            #mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
+            #mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
 
             cost_ij = train_model(mini_batch_x, mini_batch_y)
 
@@ -478,8 +478,8 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
                     for j in xrange(n_test_batches):
                         batch_x, batch_y = test_iterator.next()
-                        batch_x = downscale_3d(batch_x, downsample_factor)
-                        batch_y = downscale_3d(batch_y, downsample_factor)
+                        #batch_x = downscale_3d(batch_x, downsample_factor)
+                        #batch_y = downscale_3d(batch_y, downsample_factor)
 
                         test_losses += test_model(batch_x, batch_y)
                         test_score = test_losses/n_test_batches
