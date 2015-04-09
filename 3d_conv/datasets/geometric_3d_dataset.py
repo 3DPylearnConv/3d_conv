@@ -128,8 +128,9 @@ class Geometric3dIterator():
                 geometry_types=(Geometric3DDataset.SPHERE_TYPE,) * self.batch_size)
             data = self.__kinect_scan(labels)
         elif self.task == Geometric3DDataset.HALF_COMPLETION_TASK:
+            geometry_types = np.random.randint(0, self.num_labels, self.batch_size)
             temp = self.__generate_solid_figures(
-                geometry_types=(Geometric3DDataset.SPHERE_TYPE,) * self.batch_size)
+                geometry_types=geometry_types)
             # split the volume in halves in the x direction
             data = temp[:, :, :, :int(self.patch_size/2), :]
             labels = temp[:, :, :, int(self.patch_size/2):, :]
