@@ -47,15 +47,14 @@ def downscale_3d(the_5d_input, downscale_factor):
     the 3 spatial dimensions has size divisible by the downscale factor.
     """
     array_shape = the_5d_input.shape
-    return numpy.round(the_5d_input.reshape(array_shape[0],
+    return the_5d_input.reshape(array_shape[0],
                                             array_shape[1] / downscale_factor,
                                             downscale_factor,
                                             array_shape[2],
                                             array_shape[3] / downscale_factor,
                                             downscale_factor,
                                             array_shape[4] / downscale_factor,
-                                            downscale_factor)
-                       .mean(axis=(2, 5, 7)))
+                                            downscale_factor).max(axis=(2, 5, 7))
 
 
 def bounding_box_re_center_3d(the_5d_input):

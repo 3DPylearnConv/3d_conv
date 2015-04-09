@@ -147,18 +147,20 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     """
 
     rng = numpy.random.RandomState(23455)
-    n_train_batches = 20
-    n_valid_batches = 5
-    n_test_batches = 5
-    batch_size = 20
+    n_train_batches = 50
+    n_valid_batches = 3
+    n_test_batches = 3
+    batch_size = 40
 
     downsample_factor = 16
     xdim = 256/downsample_factor
     ydim = 256/downsample_factor
     ydim = ydim/2
-    recon_size = ydim*ydim*ydim
     zdim = 256/downsample_factor
     convsize = 3
+    recon_size = ydim*xdim*zdim
+    full_dimension = 256/downsample_factor
+
     # allocate symbolic variables for the data
     index = T.lscalar()  # index to a [mini]batch
 
@@ -226,24 +228,23 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         rng,
         input=layer2_input,
         n_in=nkerns[1] * zdim * ydim * xdim,
-        n_out=1500,
+        n_out=1800,
         activation=relu, drop=drop
     )
     layer3 = HiddenLayer(
         rng,
         input=layer2.output,
-        n_in=1500,
-        n_out=2000,
+        n_in=1800,
+        n_out=1800,
         activation=relu, drop=drop
     )
-
 
 
     # classify the values of the fully-connected sigmoidal layer
     layer4 = reconLayer(
         rng,
         input=layer3.output,
-        n_in=2000,
+        n_in=1800,
         n_out=recon_size,
         activation=T.nnet.sigmoid
     )
@@ -340,7 +341,6 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     test_score = 0.
     start_time = time.clock()
 
-    epoch = 0
     done_looping = False
 
     models_dir = '/srv/3d_conv_data/ModelNet10'
@@ -350,7 +350,6 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     test_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='test')
     validation_dataset = ModelNetDataset(models_dir, patch_size, dataset_type='train')
 
-    categories = train_dataset.get_categories()
     epoch_count = 0
 
     while (epoch_count < n_epochs) and (not done_looping):
@@ -389,6 +388,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                 demo_y = 0
                 for i in xrange(n_valid_batches):
                     mini_batch_x, mini_batch_y = validation_iterator.next()
+
                     mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
                     mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
 
@@ -408,19 +408,18 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                 # get 1 example for demonstrating the model:
 
 
-                if epoch > 2:
+                if epoch_count > 2:
                     mini_batch_x, mini_batch_y = validation_iterator.next()
                     mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
                     mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
 
                     img = demonstrate_model(mini_batch_x, mini_batch_y)
 
-                    full_dimension = recon_size * 2
 
                     for i in xrange(3):
 
 
-                        given = mini_batch_x[i,:].reshape(full_dimension,recon_size,full_dimension)
+                        given = mini_batch_x[i,:].reshape(full_dimension,full_dimension/2,full_dimension)
                         """
                         #print given
 
@@ -433,15 +432,15 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                         plt.show()
                         """
 
-                        result = img[i,:].reshape(full_dimension,recon_size,full_dimension)
+                        result = img[i,:].reshape(full_dimension,full_dimension/2,full_dimension)
 
 
 
                         answer = mini_batch_y[i,:]
-                        answer = answer.reshape(full_dimension,recon_size,full_dimension)
+                        answer = answer.reshape(full_dimension,full_dimension/2,full_dimension)
 
                         toSave = [given, result, answer]
-                        output = open("shape%depoch%d" % (epoch, i), 'wb')
+                        output = open("Ashape%depoch%d.pkl" % (epoch_count, i), 'wb')
                         cPickle.dump(toSave,output)
                         output.close()
 
@@ -483,7 +482,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                           (epoch_count, minibatch_index + 1, n_train_batches,
                            test_score * 100.))
 
-            if patience <= iter:
+            if patience <= mini_batch_count:
                 done_looping = True
                 break
 

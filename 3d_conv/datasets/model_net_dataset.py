@@ -110,8 +110,7 @@ class ModelNetIterator():
 
     def next(self):
 
-        batch_indices = np.random.random_integers(0, self.dataset.get_num_examples(), self.batch_size)
-        batch_indices.sort()
+        batch_indices = np.random.random_integers(0, self.dataset.get_num_examples()-1, self.batch_size)
 
 
         if isinstance(batch_indices, slice):
@@ -142,8 +141,8 @@ class ModelNetIterator():
             #batch_x[i, :, :, :, 0] = np.copy(np.zeros(model.data.shape))
             #batch_y[i, :, :, :, 0] = np.copy(np.zeros(model.data.shape))
 
-            batch_x[i, :, :, :, 0][model.data[:patch_size/2, : ,:]] = 1
-            batch_y[i, :, :, :, 0][model.data[patch_size/2:, :, :]] = 1
+            batch_x[i, :, :, :, 0][model.data[:patch_size/2,:,:]] = 1
+            batch_y[i, :, :, :, 0][model.data[patch_size/2:,:,:]] = 1
 
         #make batch C01B rather than B01C
         batch_x = batch_x.transpose(0, 3, 4, 1, 2)
