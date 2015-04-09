@@ -60,8 +60,8 @@ def downscale_3d(the_5d_input, downscale_factor):
 
 def bounding_box_re_center_3d(the_5d_input):
     """
-    Downscales a 3d layer (represented as a 5d BZCXY array) by the same downscale_factor in each dimension. Assumes that each of
-    the 3 spatial dimensions has size divisible by the downscale factor.
+    Takes a 3d cube layer (represented as a 1 channel 5d BZCXY array) and shifts it such that the bounding box of the
+    non-zero pixels is centered in all three axes
     """
     array_shape = the_5d_input.shape
     the_5d_output = numpy.zeros(shape=array_shape)
@@ -74,9 +74,10 @@ def bounding_box_re_center_3d(the_5d_input):
         midX = (min(nonzeros[3]) + max(nonzeros[3])) // 2
         midY = (min(nonzeros[4]) + max(nonzeros[4])) // 2
 
-        temp = numpy.roll(the_5d_input[n, :, 0, :, :], numpy.round(mid-midZ), axis=0)
-        temp = numpy.roll(temp, numpy.round(mid-midX), axis=1)
-        temp = numpy.roll(temp, numpy.round(mid-midY), axis=2)
+        temp = numpy.roll(numpy.roll(numpy.roll(the_5d_input[n, :, 0, :, :],
+                                                numpy.round(mid-midZ), axis=0),
+                                                numpy.round(mid-midX), axis=1),
+                                                numpy.round(mid-midY), axis=2)
 
         the_5d_output[n, :, 0, :, :] = temp
 
