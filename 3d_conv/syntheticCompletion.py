@@ -345,7 +345,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     done_looping = False
 
     models_dir = '/srv/3d_conv_data/ModelNet10'
-    patch_size = 28
+    patch_size = 18
 
 
     train_dataset = Geometric3DDataset(patch_size=patch_size,
