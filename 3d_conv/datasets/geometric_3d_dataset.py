@@ -17,7 +17,7 @@ class Geometric3DDataset:
                  patch_size=32,
                  task=CLASSIFICATION_TASK,
                  centered=True):
-        if patch_size <= 7:
+        if patch_size <= 10:
             raise NotImplementedError
 
         self.num_labels = 3  # used only for classification. TODO: find a more elegant way rather than hard-coding this
@@ -51,10 +51,10 @@ class Geometric3dIterator():
             if self.task == Geometric3DDataset.HALF_COMPLETION_TASK:
                 x0 = (self.patch_size-1)/2
                 # generate 2 numbers in the range [0, self.patch_size-1)
-                (y0, z0) = np.random.rand(2) * (self.patch_size-1)
+                (y0, z0) = np.random.rand(2) * ((self.patch_size-1)-6) + 3
             else:
                 # generate 3 numbers in the range [0, self.patch_size-1)
-                (x0, y0, z0) = np.random.rand(3) * (self.patch_size-1)
+                (x0, y0, z0) = np.random.rand(3) * ((self.patch_size-1)-6) + 3
 
         solid_figures = np.zeros((self.batch_size, self.patch_size, 1, self.patch_size, self.patch_size),
                                  dtype=np.bool)
