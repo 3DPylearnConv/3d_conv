@@ -17,19 +17,17 @@ import binvox_rw
 
 class BigBirdDataset(pylearn2.datasets.dataset.Dataset):
 
-    def __init__(self, models_dir, patch_size=100, dataset_type='train'):
-        if dataset_type == 'valid':
-            dataset_type = 'test'
+    def __init__(self, models_dir='/srv/3d_conv_data/big_bird_processed_models/', patch_size=100):
 
         self.patch_size = patch_size
 
         self.categories = [d for d in os.listdir(models_dir) if os.path.isdir(os.path.join(models_dir, d))]
         self.examples = []
-        subdir = '/' + dataset_type + '/'
+
         for category in self.categories:
-            for file_name in os.listdir(models_dir + '/' + category + subdir):
+            for file_name in os.listdir(models_dir + category ):
                 if ".binvox" in file_name:
-                    self.examples.append((models_dir + '/' + category + subdir + file_name, category))
+                    self.examples.append((models_dir + category + '/' + file_name, category))
 
     def adjust_for_viewer(self, X):
         raise NotImplementedError
@@ -47,19 +45,15 @@ class BigBirdDataset(pylearn2.datasets.dataset.Dataset):
         return self.categories
 
 
-    def iterator(self, mode=None, batch_size=None, num_batches=None,
-                 topo=None, targets=None, rng=None, data_specs=None,
-                 return_tuple=False, type="default"):
+    def iterator(self, batch_size, num_batches, type='default'):
         if type == "default":
-            return ModelNetIterator(self,
+            return BigBirdIterator(self,
                                  batch_size=batch_size,
-                                 num_batches=num_batches,
-                                 mode=mode)
+                                 num_batches=num_batches)
         else:
-            return ModelNetIteratorClassifier(self,
+            return BigBirdClassifierIterator(self,
                      batch_size=batch_size,
-                     num_batches=num_batches,
-                     mode=mode)
+                     num_batches=num_batches)
 
 
 class BigBirdIterator():
@@ -67,7 +61,6 @@ class BigBirdIterator():
     def __init__(self, dataset,
                  batch_size,
                  num_batches,
-                 mode,
                  iterator_post_processors=[]):
 
         def _validate_batch_size(batch_size, dataset):
