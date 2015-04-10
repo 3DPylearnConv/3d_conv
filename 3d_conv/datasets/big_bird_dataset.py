@@ -97,7 +97,7 @@ class BigBirdIterator():
         _validate_batch_size(batch_size, dataset)
         _validate_num_batches(num_batches)
 
-        subset_iterator_class = resolve_iterator_class(None)
+        subset_iterator_class = resolve_iterator_class(mode)
         self._subset_iterator = subset_iterator_class(dataset_size, batch_size, num_batches)
 
         self.iterator_post_processors = iterator_post_processors
