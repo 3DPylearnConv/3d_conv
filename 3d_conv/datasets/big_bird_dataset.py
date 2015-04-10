@@ -92,6 +92,7 @@ class BigBirdIterator():
 
         self.dataset = dataset
         dataset_size = dataset.get_num_examples()
+        self.batch_size=batch_size
 
         _validate_batch_size(batch_size, dataset)
         _validate_num_batches(num_batches)
@@ -112,12 +113,14 @@ class BigBirdIterator():
         """
         kinect_result = np.zeros(solid_figures.shape, dtype=np.bool)
         for i in xrange(self.batch_size):
-            for x, y in itertools.product(*map(xrange, (self.patch_size, self.patch_size))):
-                for z in xrange(self.patch_size):
-                    if solid_figures[i, z, 0, x, y] == 1:
-                        kinect_result[i, z, 0, x, y] = 1
-                        break
+            for x in xrange(self.dataset.patch_size):
+                for y in xrange(self.dataset.patch_size):
+                    for z in xrange(self.dataset.patch_size):
+                        if solid_figures[i, z, 0, x, y] == 1:
+                            kinect_result[i, z, 0, x, y] = 1
+                            break
         return kinect_result
+
 
     def next(self):
 
@@ -161,7 +164,9 @@ class BigBirdIterator():
 
         #reshape batch_x for use in kinect_scan
         batch_x = batch_x.transpose(0, 1, 4, 2, 3)
-        kinect_style_batch_x = __kinect_scan(batch_x)
+        kinect_style_batch_x = self.kinect_scan(batch_x)
+        batch_x=kinect_style_batch_x.transpose(0, 4, 2, 1, 3)
+
 
 
         #apply post processors to the patches

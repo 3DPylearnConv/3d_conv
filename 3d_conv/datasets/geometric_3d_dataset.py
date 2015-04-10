@@ -102,11 +102,12 @@ class Geometric3dIterator():
         """
         kinect_result = np.zeros(solid_figures.shape, dtype=np.bool)
         for i in xrange(self.batch_size):
-            for x, y in itertools.product(*map(xrange, (self.patch_size, self.patch_size))):
-                for z in xrange(self.patch_size):
-                    if solid_figures[i, z, 0, x, y] == 1:
-                        kinect_result[i, z, 0, x, y] = 1
-                        break
+            for x in xrange(self.patch_size):
+                for y in xrange(self.patch_size):
+                    for z in xrange(self.patch_size):
+                        if solid_figures[i, z, 0, x, y] == 1:
+                            kinect_result[i, z, 0, x, y] = 1
+                            break
         return kinect_result
 
     def __one_hot(self, labels):
