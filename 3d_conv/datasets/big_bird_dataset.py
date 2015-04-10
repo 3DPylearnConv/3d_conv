@@ -45,13 +45,15 @@ class BigBirdDataset(pylearn2.datasets.dataset.Dataset):
         return self.categories
 
 
-    def iterator(self, batch_size, num_batches, type='default'):
+    def iterator(self, batch_size, num_batches, mode='even_shuffled_sequential', type='default'):
         if type == "default":
             return BigBirdIterator(self,
+                                   mode=mode,
                                  batch_size=batch_size,
                                  num_batches=num_batches)
         else:
             return BigBirdClassifierIterator(self,
+                                             mode=mode,
                      batch_size=batch_size,
                      num_batches=num_batches)
 
@@ -61,6 +63,7 @@ class BigBirdIterator():
     def __init__(self, dataset,
                  batch_size,
                  num_batches,
+                 mode,
                  iterator_post_processors=[]):
 
         def _validate_batch_size(batch_size, dataset):
@@ -93,7 +96,7 @@ class BigBirdIterator():
         _validate_batch_size(batch_size, dataset)
         _validate_num_batches(num_batches)
 
-        subset_iterator_class = resolve_iterator_class(mode)
+        subset_iterator_class = resolve_iterator_class(None)
         self._subset_iterator = subset_iterator_class(dataset_size, batch_size, num_batches)
 
         self.iterator_post_processors = iterator_post_processors
