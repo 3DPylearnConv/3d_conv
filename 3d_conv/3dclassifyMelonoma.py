@@ -297,7 +297,7 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
                                                       num_batches=n_test_batches,
                                                       mode='even_shuffled_sequential', type='classify')
 
-                    save_dir = '../saved_models/' + model_start_time
+                    save_dir = '../saved_models/melonoma_' + model_start_time
                     if not os.path.exists(save_dir):
                         os.makedirs(save_dir)
 
