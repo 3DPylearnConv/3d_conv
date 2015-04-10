@@ -56,6 +56,33 @@ def downscale_3d(the_5d_input, downscale_factor):
                                             array_shape[4] / downscale_factor,
                                             downscale_factor).max(axis=(2, 5, 7))
 
+
+def bounding_box_re_center_3d(the_5d_input):
+    """
+    Takes a 3d cube layer (represented as a 1 channel 5d BZCXY array) and shifts it such that the bounding box of the
+    non-zero pixels is centered in all three axes
+    """
+    array_shape = the_5d_input.shape
+    the_5d_output = numpy.zeros(shape=array_shape)
+    mid = (array_shape[1]-1) / 2
+
+    for n in xrange(array_shape[0]):
+        nonzeros = numpy.nonzero(the_5d_input[n, :, 0, :, :])
+
+        midZ = (min(nonzeros[1]) + max(nonzeros[1])) // 2
+        midX = (min(nonzeros[3]) + max(nonzeros[3])) // 2
+        midY = (min(nonzeros[4]) + max(nonzeros[4])) // 2
+
+        temp = numpy.roll(numpy.roll(numpy.roll(the_5d_input[n, :, 0, :, :],
+                                                numpy.round(mid-midZ), axis=0),
+                                                numpy.round(mid-midX), axis=1),
+                                                numpy.round(mid-midY), axis=2)
+
+        the_5d_output[n, :, 0, :, :] = temp
+
+    return the_5d_output
+
+
 def rms_prop(cost, params, lr=0.001, rho=0.9, epsilon=1e-6):
     """
     RMSProp update rule. Technique seen on Hinton's Coursera lecture. Code from Alec Radford's Theano tutorial: https://github.com/Newmu/Theano-Tutorials/blob/master/5_convolutional_net.py.
