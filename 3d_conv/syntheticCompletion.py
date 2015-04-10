@@ -229,14 +229,14 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         rng,
         input=layer2_input,
         n_in=nkerns[1] * zdim * ydim * xdim,
-        n_out=1200,
+        n_out=2000,
         activation=relu, drop=drop
     )
     layer3 = HiddenLayer(
         rng,
         input=layer2.output,
-        n_in=1200,
-        n_out=1200,
+        n_in=2000,
+        n_out=2000,
         activation=relu, drop=drop
     )
 
@@ -245,7 +245,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     layer4 = reconLayer(
         rng,
         input=layer3.output,
-        n_in=1200,
+        n_in=2000,
         n_out=recon_size,
         activation=T.nnet.sigmoid
     )
@@ -448,7 +448,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                         answer = answer.reshape(full_dimension,full_dimension/2,full_dimension)
 
                         toSave = [given, result, answer]
-                        output = open("../synthShapes/3synthshapes%depoch%d.pkl" % (epoch_count, i), 'wb')
+                        output = open("../synthShapes/2000units40batch/3synthshapes%depoch%d.pkl" % (epoch_count, i), 'wb')
                         cPickle.dump(toSave,output)
                         output.close()
 
