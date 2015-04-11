@@ -66,36 +66,9 @@ class BigBirdIterator():
                  mode,
                  iterator_post_processors=[]):
 
-        def _validate_batch_size(batch_size, dataset):
-            if not batch_size:
-                raise ValueError("batch size is none")
-
-            num_examples = dataset.get_num_examples()
-            if batch_size > num_examples:
-                raise ValueError("batch size:%i is to large, dataset has %i examples", batch_size, num_examples)
-
-            if batch_size < 0:
-                raise ValueError("batch size: %i cannot be negative", batch_size)
-
-            if not isinstance(batch_size, int):
-                raise ValueError("batch_size is not an int")
-
-        def _validate_num_batches(num_batches):
-            if not num_batches:
-                raise ValueError("num_batches is none")
-
-            if num_batches < 0:
-                raise ValueError("num_batches: %i cannot be negative", num_batches)
-
-            if not isinstance(num_batches, int):
-                raise ValueError("num_batches is not an int")
-
         self.dataset = dataset
         dataset_size = dataset.get_num_examples()
         self.batch_size=batch_size
-
-        _validate_batch_size(batch_size, dataset)
-        _validate_num_batches(num_batches)
 
         subset_iterator_class = resolve_iterator_class(mode)
         self._subset_iterator = subset_iterator_class(dataset_size, batch_size, num_batches)
@@ -125,8 +98,6 @@ class BigBirdIterator():
     def next(self):
 
         batch_indices = np.random.random_integers(0, self.dataset.get_num_examples()-1, self.batch_size)
-
-
 
 
         # if we are using a shuffled sequential subset iterator
