@@ -30,6 +30,17 @@ from layers.max_pool_layer_3d import *
 from layers.layer_utils import *
 from layers.recon_layer import *
 
+
+def pretty_print_time():
+    t = time.localtime()
+
+    minute = str(t.tm_min)
+    if len(minute) == 1:
+        minute = '0' + minute
+
+    return str(t.tm_mon) + "_" + str(t.tm_mday) + "_" + str(t.tm_hour) + "_" + minute
+
+
 def evaluate(learning_rate=0.001, n_epochs=200,
                     nkerns=[10, 15], num_train_batches=30):
     """
@@ -248,6 +259,8 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
     #categories = train_dataset.get_categories()
 
+    model_start_time = pretty_print_time()
+
     while (epoch_count < n_epochs) and (not done_looping):
 
         epoch_count += 1
@@ -321,10 +334,14 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                                                       num_batches=n_test_batches,
                                                       mode='even_shuffled_sequential', type='classify')
 
-                    numpy.save('dropout2layer0', layer0.params)
-                    numpy.save('dropout2layer1', layer1.params)
-                    numpy.save('dropout2layer2', layer2.params)
+                    save_dir = '../saved_models/shapes/' + model_start_time
+                    if not os.path.exists(save_dir):
+                        os.makedirs(save_dir)
 
+                    numpy.save(save_dir + '/dropout2layer0', layer0.params)
+                    numpy.save(save_dir + '/dropout2layer1', layer1.params)
+                    numpy.save(save_dir + '/dropout2layer2', layer2.params)
+                    numpy.save(save_dir + '/validation_error', numpy.array(this_validation_loss))
 
                     for j in xrange(n_test_batches):
                         batch_x, batch_y = test_iterator.next()
