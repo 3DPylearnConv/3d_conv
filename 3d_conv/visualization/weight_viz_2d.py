@@ -32,7 +32,7 @@ def gen_weight_patches(npy_filepath, save_filename):
         out[i, :, :, 0] = imresize(weight, (s3*10, s4*10), interp='nearest')
 
     #print weights.shape
-    viewer = make_viewer(out)
+    viewer = make_viewer(out, grid_shape=(s0*s2, s3))
 
     if save_filename:
         viewer.save(save_filename)
