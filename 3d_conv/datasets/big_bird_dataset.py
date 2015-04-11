@@ -127,8 +127,7 @@ class BigBirdIterator():
         batch_indices = np.random.random_integers(0, self.dataset.get_num_examples()-1, self.batch_size)
 
 
-        if isinstance(batch_indices, slice):
-            batch_indices = np.array(range(batch_indices.start, batch_indices.stop))
+
 
         # if we are using a shuffled sequential subset iterator
         # then next_index will be something like:
