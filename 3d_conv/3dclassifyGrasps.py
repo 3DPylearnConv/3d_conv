@@ -42,7 +42,7 @@ def pretty_print_time():
 
 
 def evaluate(learning_rate=0.001, n_epochs=2000,
-                    nkerns=[10, 15, 32], num_train_batches=30):
+                    nkerns=[32, 64, 32], num_train_batches=30):
     """
     :type learning_rate: float
     :param learning_rate: learning rate used (factor for the stochastic
@@ -141,7 +141,7 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
 
 
     # create a list of all model parameters to be fit by gradient descent
-    params =  layer2.params + layer1.params + layer0.params
+    params = layer2.params + layer1.params + layer0.params
 
     #L1 = abs(layer0.W).sum() + abs(layer1.W).sum() + abs(layer2.W).sum() + abs(layer3.W).sum()
 
@@ -298,7 +298,7 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
                                                       mode='even_shuffled_sequential')
 
 
-                    save_dir = '../saved_models/' + model_start_time
+                    save_dir = '../saved_models/grasping_' + model_start_time
                     if not os.path.exists(save_dir):
                         os.makedirs(save_dir)
 
