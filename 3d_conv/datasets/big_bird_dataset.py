@@ -116,7 +116,7 @@ class BigBirdIterator():
             for x in xrange(self.dataset.patch_size):
                 for y in xrange(self.dataset.patch_size):
                     for z in xrange(self.dataset.patch_size):
-                        if solid_figures[i, z, 0, x, y] == 1:
+                        if solid_figures[i, z, 0, x, y] > 0.001:  # if non-zero
                             kinect_result[i, z, 0, x, y] = 1
                             break
         return kinect_result
