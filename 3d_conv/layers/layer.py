@@ -19,9 +19,9 @@ class Layer():
         return self.params
 
     def get_output_shape(self):
-        raise NotImplementedError
+        self.output_shape
 
     def get_input_shape(self):
-        raise NotImplementedError
+        self.input_shape
 
 

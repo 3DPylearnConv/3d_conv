@@ -3,11 +3,12 @@ import theano
 from theano.tensor.nnet.conv3d2d import *
 from layers.layer_utils import *
 from layers.layer import Layer
+from layers.max_pool_layer_3d import *
 
 class ConvLayer3D(Layer):
     """3D Layer of a convolutional network """
 
-    def __init__(self, rng, input, filter_shape, image_shape, drop, poolsize=(2, 2), p=0.5):
+    def __init__(self, rng, input, filter_shape, image_shape, drop, poolsize=None, p=0.5):
         """
         Allocate a layer with shared variable internal parameters.
 
@@ -37,15 +38,6 @@ class ConvLayer3D(Layer):
         newZ = zdim - conv_size + 1
         newX = xdim - conv_size + 1
         newY = ydim - conv_size + 1
-
-        self.input_shape = image_shape
-        self.output_shape = (batch_size, newZ, nchannels_out, newX, newY)
-
-        print
-        print "adding conv layer"
-        print "input shape: " + str(self.input_shape)
-        print "filter shape: " + str(filter_shape)
-        print "output shape: " + str(self.output_shape)
 
 
         #assert image_shape[1] == filter_shape[1]
@@ -86,10 +78,30 @@ class ConvLayer3D(Layer):
 
         droppedOutput = dropout(rng, out, p)
 
+        self.input_shape = image_shape
+        self.output_shape = (batch_size, newZ, nchannels_out, newX, newY)
         self.output = T.switch(T.neq(drop, 0), droppedOutput, out)
 
         # store parameters of this layer
         self.params = [self.W, self.b]
+
+        # if poolsize is an integer greater than 1, then apply maxpooling
+        if isinstance(poolsize, int) and poolsize >= 2:
+            pooled = MaxPoolLayer3D(input, self.output_shape, ds=poolsize, ignore_border=False)
+            self.output_shape = pooled.get_output_shape()
+            self.output = pooled.get_output()
+            self.params.append(pooled.get_params)
+        elif poolsize != None:
+            print "The poolsize you entered has been ignored (it needs to be an int greater than 1, or None) it is currently: " + str(poolsize)
+
+
+        print
+        print "added conv layer"
+        print "input shape: " + str(self.input_shape)
+        print "filter shape: " + str(filter_shape)
+        if isinstance(poolsize, int) and poolsize >= 2:
+            print "poolsize (for maxpooling): " + str(poolsize)
+        print "output shape: " + str(self.output_shape)
 
     def single_pixel_cost(self, y):
 
