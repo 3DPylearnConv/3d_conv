@@ -104,7 +104,7 @@ class ConvLayer3D(Layer):
 
     def single_pixel_cost(self, y):
 
-        output = self.output[:, 14, :, 14, 14]
+        output = self.output[:, 1, :, 1, 1]
         L = T.abs_(T.sum(y - output))
         #mask = numpy.zeros((10, 28, 32, 28, 28))
         #mask[:, 14, :, 14, 14] = 1
