@@ -17,6 +17,16 @@ def visualize_3d(data):
     fig.show()
 
 
+#pc of shape (num_points, 3)
+def visualize_pointcloud(pc):
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    Axes3D.scatter(ax, pc[:, 0], pc[:, 1], pc[:, 2])
+
+    fig.show()
+
+
 def visualize_batch_x(batch_x, i=0):
 
     #switch (b 2 c 0 1) to (b 0 1 2 c)
