@@ -1,39 +1,39 @@
 
-
-from operator import mul
-import h5py
-import random
 import numpy as np
-
-import pylearn2.datasets.dataset
-import pylearn2.utils.rng
-from pylearn2.utils.iteration import SubsetIterator, resolve_iterator_class
-from pylearn2.utils import safe_izip, wraps
 import os
-#from off_utils.off_handler import OffHandler
-#from datasets.point_cloud_hdf5_dataset import create_voxel_grid_around_point
-import binvox_rw
 import collections
+
+import binvox_rw
 
 
 class ReconstructionDataset():
 
-    def __init__(self, models_dir, pc_dir, patch_size=100):
+    def __init__(self,
+                 models_dir="/src/3d_conv_data/model_reconstruction/models/",
+                 pc_dir="/src/3d_conv_data/model_reconstruction/pointclouds/",
+                 model_name="cordless_drill",
+                 patch_size=100):
 
         self.models_dir = models_dir
         self.pc_dir = pc_dir
+        self.model_name = model_name
         self.patch_size = patch_size
 
-        self.categories = [d for d in os.listdir(pc_dir) if not os.path.isdir(os.path.join(pc_dir, d))]
+        self.model_fullfilename = models_dir + model_name + ".binvox"
 
-        self.examples = []
-        for category in self.categories:
-            for file_name in os.listdir(models_dir + '/' + category):
-                if ".binvox" in file_name:
-                    self.examples.append((models_dir + '/' + category + file_name, category))
+        filenames = [d for d in os.listdir(pc_dir + model_name) if not os.path.isdir(os.path.join(pc_dir + model_name, d))]
+
+        self.pointclouds = []
+        for file_name in filenames:
+                if "_pc.npy" in file_name:
+
+                    pointcloud_file = models_dir + model_name + file_name
+                    pose_file = models_dir + model_name + file_name.replace("pc", "pose")
+
+                    self.pointclouds.append((pointcloud_file, pose_file))
 
     def get_num_examples(self):
-        return len(self.examples)
+        return len(self.pointclouds)
 
     def iterator(self,
                  batch_size=None,
@@ -73,7 +73,10 @@ class ReconstructionIterator(collections.Iterator):
 
         for i in range(len(batch_indices)):
             index = batch_indices[i]
-            model_filepath = self.dataset.examples[index][0]
+
+            model_filepath = self.dataset.model_fullfilename
+            pc = np.load(self.dataset.pointclouds[index][0])
+            model_pose = np.load(self.dataset.pointclouds[index][1])
 
             with open(model_filepath, 'rb') as f:
                 model = binvox_rw.read_as_3d_array(f)
