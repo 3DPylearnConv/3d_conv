@@ -57,24 +57,24 @@ def downscale_3d(the_5d_input, downscale_factor):
                                             downscale_factor).max(axis=(2, 5, 7))
 
 
-def rotate_3d(the_5d_input, rotation_matrix):
+def rotate_3d(the_3d_input, rotation_matrix):
     """
-    Rotates a 3d voxel layer (represented as a 5d BZCXY array) around the center of the voxel grid using the specified
+    Rotates a 3d voxel layer (represented as a 3d XYZ array) around the center of the voxel grid using the specified
       rotation matrix (The rotation matrix should assume it will be multiplied by a [x,y,z] column vector representing
-      a voxel position in order to obtain the new voxel position). Assumes that is voxel contains 0 or 1 but not anything in between.
+      a voxel position in order to obtain the new voxel position). Assumes that each voxel contains 0 or 1 but not
+      anything in between.
     """
-    array_shape = the_5d_input.shape
-    rotated_output = numpy.zeros(shape=array_shape)
+    array_shape = the_3d_input.shape
+    rotated_output = numpy.zeros(shape=array_shape, dtype=the_3d_input.dtype)
 
-    for n in xrange(array_shape[0]):
-        # create a matrix with 3 rows (x, y, z), where each column represents the voxel location of a non-zero voxel
-        nonzeros = numpy.nonzero(the_5d_input[n, :, 0, :, :])[[3, 4, 1]]
-        # Apply the rotation matrix to the non-zero voxel locations
-        rotated_nonzeros = rotation_matrix * nonzeros
+    # create a matrix with 3 rows (x, y, z), where each column represents the voxel location of a non-zero voxel
+    nonzeros = numpy.nonzero(the_3d_input)
+    # Apply the rotation matrix to the non-zero voxel locations
+    rotated_nonzeros = rotation_matrix * nonzeros
 
-        for x, y, z in rotated_nonzeros.T:
-            if 0 <= x < array_shape[3] and 0 <= y < array_shape[4] and 0 <= z < array_shape[1]:
-                rotated_output[n, z, 0, x, y] = 1
+    for x, y, z in rotated_nonzeros.T:
+        if 0 <= x < array_shape[0] and 0 <= y < array_shape[1] and 0 <= z < array_shape[2]:
+            rotated_output[x, y, z] = 1
 
     return rotated_output
 
