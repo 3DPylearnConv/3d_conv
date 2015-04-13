@@ -9,8 +9,8 @@ import binvox_rw
 class ReconstructionDataset():
 
     def __init__(self,
-                 models_dir="/src/3d_conv_data/model_reconstruction/models/",
-                 pc_dir="/src/3d_conv_data/model_reconstruction/pointclouds/",
+                 models_dir="/srv/3d_conv_data/model_reconstruction/models/",
+                 pc_dir="/srv/3d_conv_data/model_reconstruction/pointclouds/",
                  model_name="cordless_drill",
                  patch_size=100):
 
@@ -27,8 +27,8 @@ class ReconstructionDataset():
         for file_name in filenames:
                 if "_pc.npy" in file_name:
 
-                    pointcloud_file = models_dir + model_name + file_name
-                    pose_file = models_dir + model_name + file_name.replace("pc", "pose")
+                    pointcloud_file = pc_dir + model_name + "/" + file_name
+                    pose_file = pc_dir + model_name + "/" + file_name.replace("pc", "pose")
 
                     self.pointclouds.append((pointcloud_file, pose_file))
 
