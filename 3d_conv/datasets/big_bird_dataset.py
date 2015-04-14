@@ -124,7 +124,7 @@ class BigBirdIterator():
             batch_y[i, :, :, :, 0][model.data[:, :, :]] = 1
 
         #make batch B2C01 rather than B012C
-        batch_y = batch_y.transpose(0, 3, 4, 1, 2)
+        batch_y = batch_y.transpose(0, 1, 4, 3, 2)
 
         batch_x = self.__kinect_scan(batch_y)
 
