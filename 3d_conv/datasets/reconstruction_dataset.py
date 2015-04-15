@@ -201,12 +201,23 @@ class ReconstructionIterator(collections.Iterator):
             #pc2_out, non_zero_arr1 = self.map_pointclouds_to_world(pc, non_zero_arr, model_pose)
             pc2_out, non_zero_arr1 = self.map_pointclouds_to_camera_frame(pc, non_zero_arr, model_pose)
 
+            min_x = pc2_out[0, :].min()
+            min_y = pc2_out[1, :].min()
+            min_z = pc2_out[2, :].min()
 
+            max_x = pc2_out[0, :].max()
+            max_y = pc2_out[1, :].max()
+            max_z = pc2_out[2, :].max()
+
+            center = (min_x + (max_x-min_x)/2.0, min_y + (max_y-min_y)/2.0, min_z + (max_z-min_z)/2.0)
+
+            # import IPython
+            # IPython.embed()
             #now non_zero_arr and pc points are in the same frame of reference.
             #since the images were captured with the model at the origin
             #we can just compute an occupancy grid centered around the origin.
-            x = create_voxel_grid_around_point(pc2_out[0:3, :].T, (0, 0, 0), voxel_resolution=.02, num_voxels_per_dim=patch_size)
-            y = create_voxel_grid_around_point(non_zero_arr1.T[:, 0:3], (0, 0, 0), voxel_resolution=.02, num_voxels_per_dim=patch_size)
+            x = create_voxel_grid_around_point(pc2_out[0:3, :].T, center, voxel_resolution=.02, num_voxels_per_dim=patch_size)
+            y = create_voxel_grid_around_point(non_zero_arr1.T[:, 0:3], center, voxel_resolution=.02, num_voxels_per_dim=patch_size)
 
             # viz.visualize_3d(x)
             # viz.visualize_3d(y)
