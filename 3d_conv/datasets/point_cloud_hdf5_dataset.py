@@ -57,6 +57,15 @@ def get_camera_info(hard_coded=True):
         return camera_model.cx(), camera_model.cy(), camera_model.fx(), camera_model.fy()
 
 
+def uvd_to_xyz(u,v,d):
+    cx, cy, fx, fy = get_camera_info()
+
+    # get x and y data in a vectorized way
+    x = (u - cx) / fx * d
+    y = (v - cy) / fy * d
+
+    return x, y, d
+
 #this function takes an rgbd_image
 #and creates a 3d point cloud out of it
 #using the parameters of the camera used to capture the
@@ -110,7 +119,7 @@ def create_voxel_grid_around_point(points, patch_center, voxel_resolution=0.001,
 
 class HDF5_PointCloud_Iterator(HDF5_Iterator):
 
-    def next(self):
+    def next(self, rgb=False):
 
         batch_indices = np.random.random_integers(0, self.dataset.get_num_examples()-1, self.batch_size)
         batch_size = len(batch_indices)
@@ -126,22 +135,32 @@ class HDF5_PointCloud_Iterator(HDF5_Iterator):
         batch_x = np.zeros((batch_size, patch_size, patch_size, patch_size, 1))
         batch_y = np.zeros((batch_size, num_uvd_per_rgbd * num_grasp_types))
 
+
+        rgbs = []
+
+
+
         #go through and append patches to batch_x, batch_y
         for i in range(len(finger_indices)):
             batch_index = batch_indices[i]
             finger_index = finger_indices[i]
             u, v, d = self.dataset.h5py_dataset['uvd'][batch_index, finger_index, :]
             rgbd = self.dataset.topo_view[batch_index, :, :, :]
+            rgbs.append(np.copy(rgbd[:,:,0:3]))
 
             structured_points = create_point_cloud_vectorized(rgbd, True)
 
-            patch_center_x, patch_center_y, patch_center_z = structured_points[u, v]
+            patch_center_x, patch_center_y, patch_center_z = uvd_to_xyz(u,v,d)#structured_points[u, v]
+
 
             points = create_point_cloud_vectorized(rgbd, structured=False)
             patch = create_voxel_grid_around_point(points=points,
                                                    patch_center=(patch_center_x, patch_center_y, patch_center_z),
                                                    voxel_resolution=0.01,
                                                    num_voxels_per_dim=patch_size)
+
+            # import IPython
+            # IPython.embed()
 
             grasp_type = self.dataset.y[batch_index, 0]
             grasp_energy = self.dataset.h5py_dataset['energy'][batch_index]
@@ -154,14 +173,13 @@ class HDF5_PointCloud_Iterator(HDF5_Iterator):
         #make batch B2C01 rather than B012C
         batch_x = batch_x.transpose(0, 3, 4, 1, 2)
 
-        #apply post processors to the patches
-        #for post_processor in self.iterator_post_processors:
-        #    batch_x, batch_y = post_processor.apply(batch_x, batch_y)
-
         batch_x = np.array(batch_x, dtype=np.float32)
         batch_y = np.array(batch_y, dtype=np.float32)
 
-        return batch_x, batch_y
+        if rgb:
+            return batch_x, batch_y, rgbs
+        else:
+             return batch_x, batch_y
 
 if __name__ == "__main__":
     import IPython

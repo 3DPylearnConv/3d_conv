@@ -4,17 +4,31 @@ import sys
 
 import numpy as np
 from scipy.misc import imresize
-
+import cPickle
 from pylearn2.gui.patch_viewer import make_viewer
 
 #to show, may need to run:
 #export PYLEARN2_VIEWER_COMMAND=eog
 
-# weights of shape (out channel, time, in channel, row, column)
-def gen_weight_patches(npy_filepath, save_filename):
 
+#load raw weights saved in a numpy file
+def load_npy_weight_file(npy_filepath):
     weights = np.load(npy_filepath)
     weights = weights[0].get_value()
+    return weights
+
+
+#load a keras model and extract 3d weights from layer0
+def load_pkl_model_weights(model_filepath):
+    f = open(model_filepath, 'r')
+    model = cPickle.load(f)
+    l0 = model.layers[0]
+    w0 = l0.W.get_value()
+    return w0
+
+
+# weights of shape (out channel, time, in channel, row, column)
+def gen_weight_patches(weights, save_filename=None):
 
     s0, s1, s2, s3, s4 = weights.shape
     weights = weights.reshape(s0*s1*s2, s3, s4, 1)
@@ -45,4 +59,10 @@ if __name__ == "__main__":
     parser.add_argument('--save', type=str, help='save weights file rather than show it. ex: --save out.png', default=None)
     args = parser.parse_args(sys.argv[1:])
 
-    gen_weight_patches(args.weight_file, args.save)
+    weights = None
+    if ".pkl" in args.weight_file:
+        weights = load_pkl_model_weights(args.weight_file)
+    elif ".npy" in args.weight_file:
+        weights = load_npy_weight_file(args.weight_file)
+
+    gen_weight_patches(weights, args.save)

@@ -48,12 +48,10 @@ class BigBirdDataset(pylearn2.datasets.dataset.Dataset):
     def iterator(self, batch_size, num_batches, mode='even_shuffled_sequential', type='default'):
         if type == "default":
             return BigBirdIterator(self,
-                                   mode=mode,
                                  batch_size=batch_size,
                                  num_batches=num_batches)
         else:
             return BigBirdClassifierIterator(self,
-                                             mode=mode,
                      batch_size=batch_size,
                      num_batches=num_batches)
 
@@ -63,21 +61,16 @@ class BigBirdIterator():
     def __init__(self, dataset,
                  batch_size,
                  num_batches,
-                 mode,
                  iterator_post_processors=[]):
 
         self.dataset = dataset
-        dataset_size = dataset.get_num_examples()
-        self.batch_size=batch_size
-
-        subset_iterator_class = resolve_iterator_class(mode)
-        self._subset_iterator = subset_iterator_class(dataset_size, batch_size, num_batches)
+        self.batch_size = batch_size
+        self.num_batches = num_batches
 
         self.iterator_post_processors = iterator_post_processors
 
     def __iter__(self):
         return self
-
 
     def __kinect_scan(self, solid_figures):
         """
@@ -94,26 +87,13 @@ class BigBirdIterator():
                             break
         return kinect_result
 
-
     def next(self):
 
         batch_indices = np.random.random_integers(0, self.dataset.get_num_examples()-1, self.batch_size)
 
-
-        # if we are using a shuffled sequential subset iterator
-        # then next_index will be something like:
-        # array([13713, 14644, 30532, 32127, 35746, 44163, 48490, 49363, 52141, 52216])
-        # hdf5 can only support this sort of indexing if the array elements are
-        # in increasing order
-        batch_size = 0
-        if isinstance(batch_indices, np.ndarray):
-            batch_indices.sort()
-            batch_size = len(batch_indices)
-
         patch_size = self.dataset.patch_size
 
-        batch_x = np.zeros((batch_size, patch_size, patch_size, patch_size, 1))
-        batch_y = np.zeros((batch_size, patch_size, patch_size, patch_size, 1))
+        batch_y = np.zeros((self.batch_size, patch_size, patch_size, patch_size, 1))
 
         for i in range(len(batch_indices)):
             index = batch_indices[i]
@@ -137,30 +117,15 @@ class BigBirdIterator():
 
         return batch_x, batch_y
 
-    @property
-    @wraps(SubsetIterator.batch_size, assigned=(), updated=())
     def batch_size(self):
-        return self._subset_iterator.batch_size
+        return self.batch_size
 
-    @property
-    @wraps(SubsetIterator.num_batches, assigned=(), updated=())
     def num_batches(self):
-        return self._subset_iterator.num_batches
+        return self.num_batches
 
-    @property
-    @wraps(SubsetIterator.num_examples, assigned=(), updated=())
     def num_examples(self):
-        return self._subset_iterator.num_examples
+        return self.dataset.get_num_examples()
 
-    @property
-    @wraps(SubsetIterator.uneven, assigned=(), updated=())
-    def uneven(self):
-        return self._subset_iterator.uneven
-
-    @property
-    @wraps(SubsetIterator.stochastic, assigned=(), updated=())
-    def stochastic(self):
-        return self._subset_iterator.stochastic
 
 class BigBirdClassifierIterator(BigBirdIterator):
 
