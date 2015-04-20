@@ -43,7 +43,7 @@ class GaussianNoisePostProcessor():
 class RGBD_HDF5_Dataset(pylearn2.datasets.dataset.Dataset):
 
     def __init__(self, topo_view_key, y_key, hdf5_filepath, patch_size=72):
-        self.h5py_dataset = h5py.File(hdf5_filepath)
+        self.h5py_dataset = h5py.File(hdf5_filepath, 'r')
 
         #our topological view is rgbd
         self.topo_view = self.h5py_dataset[topo_view_key]
