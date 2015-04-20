@@ -57,7 +57,7 @@ def downscale_3d(the_5d_input, downscale_factor):
                                             downscale_factor).max(axis=(2, 5, 7))
 
 
-def rotate_3d(the_3d_input, rotation_matrix):
+def rotate_3d(the_3d_input, homogeneous_matrix):
     """
     Rotates a 3d voxel layer (represented as a 3d XYZ array) around the center of the voxel grid using the specified
       rotation matrix (The rotation matrix should assume it will be multiplied by a [x,y,z] column vector representing
@@ -70,7 +70,7 @@ def rotate_3d(the_3d_input, rotation_matrix):
     # create a matrix with 3 rows (x, y, z), where each column represents the voxel location of a non-zero voxel
     nonzeros = numpy.nonzero(the_3d_input)
     # Apply the rotation matrix to the non-zero voxel locations
-    rotated_nonzeros = rotation_matrix * nonzeros
+    rotated_nonzeros = homogeneous_matrix[0:3, 0:3] * nonzeros
 
     for x, y, z in rotated_nonzeros.T:
         if 0 <= x < array_shape[0] and 0 <= y < array_shape[1] and 0 <= z < array_shape[2]:
@@ -190,3 +190,24 @@ def max_pool_3d(input, ds, ignore_border=False, st=None, padding=0):
                                                        ignore_border=ignore_border,
                                                        st=(1, st),
                                                        padding=(0, padding))
+
+
+def regularized_loss(predicted, ground_truth):
+
+    # the smaller this constant, the less we "count" zeros into our loss, it helps us less to have all zeros as our
+    #   answer. When this constant is large, we basically get the standard least square error.
+    lambda_constant = 100
+    num_examples = predicted.shape[0]
+
+    loss = 0
+
+    for i in xrange(num_examples):
+        this_predicted = predicted[i]
+        this_ground_truth = ground_truth[i]
+
+        a = this_ground_truth + lambda_constant * theano.tensor.ones(theano.tensor.shape(this_ground_truth))
+        b = theano.tensor.sqr(this_predicted-this_ground_truth)
+
+        loss += theano.tensor.dot(a, b)
+
+    return loss/num_examples
