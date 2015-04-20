@@ -192,11 +192,10 @@ def max_pool_3d(input, ds, ignore_border=False, st=None, padding=0):
                                                        padding=(0, padding))
 
 
-def regularized_loss(predicted, ground_truth):
-
-    # the smaller this constant, the less we "count" zeros into our loss, it helps us less to have all zeros as our
+def regularized_loss(predicted, ground_truth, lambda_constant=10):
+    # the smaller the lambda constant, the less we "count" zero outputs into our loss, it helps us less to have all zeros as our
     #   answer. When this constant is large, we basically get the standard least square error.
-    lambda_constant = 100
+
     num_examples = predicted.shape[0]
 
     loss = 0
