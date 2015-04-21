@@ -88,10 +88,10 @@ class ConvLayer3D(Layer):
         print
         # if poolsize is an integer greater than 1, then apply maxpooling
         if isinstance(poolsize, int) and poolsize >= 2:
-            pooled = MaxPoolLayer3D(input, self.output_shape, ds=poolsize, ignore_border=False)
+            pooled = MaxPoolLayer3D(self.output, self.output_shape, ds=poolsize, ignore_border=False)
             self.output_shape = pooled.get_output_shape()
             self.output = pooled.get_output()
-            self.params.append(pooled.get_params)
+            self.params += pooled.get_params()
         elif poolsize != None:
             print "The poolsize you entered has been ignored (it needs to be an int greater than 1, or None) it is currently: " + str(poolsize)
 
