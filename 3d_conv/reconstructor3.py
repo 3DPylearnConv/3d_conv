@@ -46,6 +46,8 @@ def dropout(rng, values, p):
     output =  values * mask
     return  numpy.cast[theano.config.floatX](1.0/p) * output
 
+
+# loads saved training batches 
 class batchServer(object):
     def __init__(self, num_batches, batch_size, num_per_file, num_files):
         self.num_batches = num_batches
@@ -70,23 +72,12 @@ class batchServer(object):
 
 class reconLayer(object):
     def __init__(self, rng, input, n_in, n_out, W=None, b=None,
-                 activation=T.tanh):
+                 activation=T.nnet.sigmoid):
         
         self.input = input
         # end-snippet-1
 
-        # `W` is initialized with `W_values` which is uniformely sampled
-        # from sqrt(-6./(n_in+n_hidden)) and sqrt(6./(n_in+n_hidden))
-        # for tanh activation function
-        # the output of uniform if converted using asarray to dtype
-        # theano.config.floatX so that the code is runable on GPU
-        # Note : optimal initialization of weights is dependent on the
-        #        activation function used (among other things).
-        #        For example, results presented in [Xavier10] suggest that you
-        #        should use 4 times larger initial weights for sigmoid
-        #        compared to tanh
-        #        We have no info for other function, so we use the same as
-        #        tanh.
+
         if W is None:
             W_values = numpy.asarray(numpy.random.normal(loc=0., scale=.01, size=(n_in, n_out)), dtype=theano.config.floatX)
 
@@ -130,21 +121,7 @@ class reconLayer(object):
 def evaluate(learning_rate=0.001, n_epochs=400,
                     dataset='mnist.pkl.gz',
                     nkerns=[45,55,65], batch_size=20):
-    """ Demonstrates lenet on MNIST dataset
 
-    :type learning_rate: float
-    :param learning_rate: learning rate used (factor for the stochastic
-                          gradient)
-
-    :type n_epochs: int
-    :param n_epochs: maximal number of epochs to run the optimizer
-
-    :type dataset: string
-    :param dataset: path to the dataset used for training /testing (MNIST here)
-
-    :type nkerns: list of ints
-    :param nkerns: number of kernels on each layer
-    """
 
     rng = numpy.random.RandomState(23455)
     n_train_batches = 50
@@ -177,16 +154,7 @@ def evaluate(learning_rate=0.001, n_epochs=400,
     ######################
     print '... building the model'
 
-    # Reshape matrix of rasterized images of shape (batch_size, 28 * 28)
-    # to a 4D tensor, compatible with our LeNetConvPoolLayer
-    # (28, 28) is the size of MNIST images.
-    #layer0_input = x.reshape((batch_size, zdim, 1, ydim, xdim))
 
-
-    # Construct the first convolutional pooling layer:
-    # filtering reduces the image size to (28-5+1 , 28-5+1) = (24, 24)
-    # maxpooling reduces this further to (24/2, 24/2) = (12, 12)
-    # 4D output tensor is thus of shape (batch_size, nkerns[0], 12, 12)
     layer0 = ConvLayer3D(
         rng,
         input=x,
@@ -195,10 +163,6 @@ def evaluate(learning_rate=0.001, n_epochs=400,
         poolsize=2, drop=drop
     )
 
-    # Construct the second convolutional pooling layer
-    # filtering reduces the image size to (12-5+1, 12-5+1) = (8, 8)
-    # maxpooling reduces this further to (8/2, 8/2) = (4, 4)
-    # 4D output tensor is thus of shape (nkerns[0], nkerns[1], 4, 4)
 
     zdim = (zdim - convsize + 1)/2
     xdim = (xdim - convsize + 1)/2
@@ -224,17 +188,13 @@ def evaluate(learning_rate=0.001, n_epochs=400,
         poolsize=None, drop=drop
     )
 
-    # the HiddenLayer being fully-connected, it operates on 2D matrices of
-    # shape (batch_size, num_pixels) (i.e matrix of rasterized images).
-    # This will generate a matrix of shape (batch_size, nkerns[1] * 4 * 4),
-    # or (500, 50 * 4 * 4) = (500, 800) with the default values.
+
     layer2_input = layer1.output.flatten(2)
 
     zdim = zdim - convsize + 1
     xdim = xdim - convsize + 1
     ydim = ydim - convsize + 1
 
-    # construct a fully-connected sigmoidal layer
     layer2 = HiddenLayer(
         rng,
         input=layer2_input,
@@ -281,9 +241,7 @@ def evaluate(learning_rate=0.001, n_epochs=400,
         layer4.errors(y),
         givens={
 
-            drop: numpy.cast['int32'](0)
-
-        }, allow_input_downcast=True
+            drop: numpy.cast['int32'](0)       }, allow_input_downcast=True
 
     )
     demonstrate_model = theano.function(
@@ -298,13 +256,6 @@ def evaluate(learning_rate=0.001, n_epochs=400,
 
     # create a list of gradients for all model parameters
     grads = T.grad(cost, params)
-
-    # train_model is a function that updates the model parameters by
-    # SGD Since this model has many parameters, it would be tedious to
-    # manually create an update rule for each model parameter. We thus
-    # create the updates list by automatically looping over all
-    # (params[i], grads[i]) pairs.
-
 
 
     #RMSprop
