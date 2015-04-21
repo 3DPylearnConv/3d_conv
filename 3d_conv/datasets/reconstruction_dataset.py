@@ -154,10 +154,10 @@ class ReconstructionIterator(collections.Iterator):
             index = batch_indices[i]
 
             model_filepath = self.dataset.model_fullfilename
-            pc = np.load(self.dataset.pointclouds[index][0])
+            pc = np.load(self.dataset.pointclouds[index][0])  # Point cloud. Shape is (number of points, 4). R,G,B,Color
             #remove 32 bit color channel
             pc = pc[:, 0:3]
-            model_pose = np.load(self.dataset.pointclouds[index][1])
+            model_pose = np.load(self.dataset.pointclouds[index][1])  # 4x4 homogeneous transform matrix
 
             with open(model_filepath, 'rb') as f:
                 model = binvox_rw.read_as_3d_array(f)
@@ -226,6 +226,7 @@ class ReconstructionIterator(collections.Iterator):
         #apply post processors to the patches
         for post_processor in self.iterator_post_processors:
             batch_x, batch_y = post_processor.apply(batch_x, batch_y)
+
 
         return batch_x, batch_y
 
