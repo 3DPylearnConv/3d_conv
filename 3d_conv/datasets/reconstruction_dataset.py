@@ -58,18 +58,12 @@ def create_voxel_grid_around_point(points, patch_center, voxel_resolution=0.001,
                            num_voxels_per_dim,
                            1))
 
-    #could be improved significantly either numpy magic or multi-threaded
-    for point in points:
+    centered_scaled_points = np.floor((points-patch_center + num_voxels_per_dim/2*voxel_resolution) / voxel_resolution)
 
-        #get x,y,z indice for the grid
-        voxel_index_x, voxel_index_y, voxel_index_z = np.floor((point - patch_center + num_voxels_per_dim/2*voxel_resolution) / voxel_resolution)
+    csp_int = centered_scaled_points.astype(int)
 
-        #print voxel_index_x, voxel_index_y, voxel_index_z
-        if 0 < voxel_index_x < num_voxels_per_dim :
-            if 0 < voxel_index_y < num_voxels_per_dim :
-                if 0 < voxel_index_z < num_voxels_per_dim:
-                    #mark voxel at this x,y,z indice as occupied.
-                    voxel_grid[voxel_index_x, voxel_index_y, voxel_index_z, 0] = 1
+    mask = (csp_int[:, 0], csp_int[:, 1], csp_int[:, 2], np.zeros((csp_int.shape[0]), dtype=int))
+    voxel_grid[mask] = 1
 
     return voxel_grid
 
@@ -153,8 +147,8 @@ class ReconstructionIterator(collections.Iterator):
 
         patch_size = self.dataset.patch_size
 
-        batch_x = np.zeros((self.batch_size, patch_size, patch_size, patch_size, 1))
-        batch_y = np.zeros((self.batch_size, patch_size, patch_size, patch_size, 1))
+        batch_x = np.zeros((self.batch_size, patch_size, patch_size, patch_size, 1), dtype=np.float32)
+        batch_y = np.zeros((self.batch_size, patch_size, patch_size, patch_size, 1), dtype=np.float32)
 
         for i in range(len(batch_indices)):
             index = batch_indices[i]
@@ -179,13 +173,11 @@ class ReconstructionIterator(collections.Iterator):
             num_points = len(non_zero_points[0])
             non_zero_arr = np.zeros((4, num_points))
 
-            for j in range(num_points):
-                non_zero_arr[0, j] = non_zero_points[0][j]
-                non_zero_arr[1, j] = non_zero_points[1][j]
-                non_zero_arr[2, j] = non_zero_points[2][j]
-                #added so that we can dot with 4x4 rotation matrix
-                non_zero_arr[3, j] = 1.0
 
+            non_zero_arr[0] = non_zero_points[0]
+            non_zero_arr[1] = non_zero_points[1]
+            non_zero_arr[2] = non_zero_points[2]
+            non_zero_arr[3] = 1.0
 
             translate_arr = np.array(translate).reshape(3, 1)
             non_zero_arr[0:3, :] = non_zero_arr[0:3, :] + translate_arr
@@ -211,8 +203,6 @@ class ReconstructionIterator(collections.Iterator):
 
             center = (min_x + (max_x-min_x)/2.0, min_y + (max_y-min_y)/2.0, min_z + (max_z-min_z)/2.0)
 
-            # import IPython
-            # IPython.embed()
             #now non_zero_arr and pc points are in the same frame of reference.
             #since the images were captured with the model at the origin
             #we can just compute an occupancy grid centered around the origin.
@@ -236,9 +226,6 @@ class ReconstructionIterator(collections.Iterator):
         #apply post processors to the patches
         for post_processor in self.iterator_post_processors:
             batch_x, batch_y = post_processor.apply(batch_x, batch_y)
-
-        batch_x = np.array(batch_x, dtype=np.float32)
-        batch_y = np.array(batch_y, dtype=np.float32)
 
         return batch_x, batch_y
 
