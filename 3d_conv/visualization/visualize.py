@@ -39,16 +39,18 @@ def visualize_pointclouds(pc0, pc1, subsample0=False, subsample1=False):
 
     if subsample0:
         mask = np.random.rand(pc0.shape[0])
-        pc0 = pc0[mask < .01]
+        pc0 = pc0[mask < .005]
 
     if subsample1:
         mask = np.random.rand(pc1.shape[0])
-        pc1 = pc1[mask < .01]
+        pc1 = pc1[mask < .005]
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     Axes3D.scatter(ax, pc0[:, 0], pc0[:, 1], pc0[:, 2], c='b')
     Axes3D.scatter(ax, pc1[:, 0], pc1[:, 1], pc1[:, 2], c='r')
+    plt.xlabel('X')
+    plt.ylabel('Y')
     fig.show()
 
 
