@@ -158,12 +158,15 @@ def build_training_example(binvox_file_path, model_pose_filepath, single_view_po
     non_zero_arr[3] = 1.0
 
     translate_arr = np.array(translate).reshape(3, 1)
+
+    #meters to centimeters
+    scale /= 100
     #inches to meters
-    scale /=2.54
+    scale /= 2.54
 
-    non_zero_arr[0:3, :] = non_zero_arr[0:3, :] + translate_arr * 100 / (scale)
+    non_zero_arr[0:3, :] = non_zero_arr[0:3, :] + translate_arr * 1.0/scale
 
-    non_zero_arr[0:3, :] = non_zero_arr[0:3, :] * (scale) / 100
+    non_zero_arr[0:3, :] = non_zero_arr[0:3, :] * scale
 
     #this is an easier task, the y value is always the same. i.e the model standing
     #up at the origin.
@@ -180,9 +183,9 @@ def build_training_example(binvox_file_path, model_pose_filepath, single_view_po
 
     center = (min_x + (max_x-min_x)/2.0, min_y + (max_y-min_y)/2.0, min_z + (max_z-min_z)/2.0)
 
-    viz.visualize_pointclouds(pc2_out.T, non_zero_arr1.T[:, 0:3], False, True)
-    import IPython
-    IPython.embed()
+    # viz.visualize_pointclouds(pc2_out.T, non_zero_arr1.T[:, 0:3], False, True)
+    # import IPython
+    # IPython.embed()
 
     #now non_zero_arr and pc points are in the same frame of reference.
     #since the images were captured with the model at the origin
