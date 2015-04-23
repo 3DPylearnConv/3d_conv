@@ -15,12 +15,6 @@ class ReconstructionDataset():
     def __init__(self,
                  models_dir="/srv/3d_conv_data/22_model_reconstruction_1000_rand_rot/models/",
                  pc_dir="/srv/3d_conv_data/22_model_reconstruction_1000_rand_rot/pointclouds/",
-                 # models_dir="/srv/3d_conv_data/model_reconstruction_1000/models/",
-                 # pc_dir="/srv/3d_conv_data/model_reconstruction_1000/pointclouds/",
-                 # models_dir="/srv/3d_conv_data/model_reconstruction_no_rot/models/",
-                 # pc_dir="/srv/3d_conv_data/model_reconstruction_no_rot/pointclouds/",
-                 # models_dir="/srv/3d_conv_data/model_reconstruction/models/",
-                 # pc_dir="/srv/3d_conv_data/model_reconstruction/pointclouds/",
                  patch_size=72):
 
         self.models_dir = models_dir
@@ -65,6 +59,14 @@ def create_voxel_grid_around_point(points, patch_center, voxel_resolution=0.001,
                            1))
 
     centered_scaled_points = np.floor((points-patch_center + num_voxels_per_dim/2*voxel_resolution) / voxel_resolution)
+
+    x_valid = [centered_scaled_points[:, 0] < num_voxels_per_dim]
+    y_valid = [centered_scaled_points[:, 1] < num_voxels_per_dim]
+    z_valid = [centered_scaled_points[:, 2] < num_voxels_per_dim]
+
+    centered_scaled_points = centered_scaled_points[x_valid]
+    centered_scaled_points = centered_scaled_points[y_valid]
+    centered_scaled_points = centered_scaled_points[z_valid]
 
     csp_int = centered_scaled_points.astype(int)
 
