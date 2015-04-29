@@ -90,3 +90,24 @@ class HiddenLayer(object):
 
         # parameters of the model
         self.params = [self.W, self.b]
+
+    def cross_entropy_error(self, y):
+        y = y.flatten(2)
+        L = - T.sum(y* T.log(self.output) + (1 - y) * T.log(1 - self.output), axis=1)
+        cost = T.mean(L)
+        return cost
+
+
+    def mean_squared_error(self, y):
+        return T.sqr(y - self.output).mean()
+
+    def errors(self, y):
+        #y=y.flatten(2)
+        #binarizedoutput = T.round(self.output)
+        errRate = T.sqr(y - self.output).mean()
+
+        return errRate
+
+    def single_pixel_cost(self, y):
+        out = self.output[(y > 0.5)]
+        return T.sqr(1 - out).mean() + 0.001 * self.mean_squared_error(y)

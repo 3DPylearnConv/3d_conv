@@ -156,14 +156,14 @@ class HDF5_PointCloud_Iterator(HDF5_Iterator):
             points = create_point_cloud_vectorized(rgbd, structured=False)
             patch = create_voxel_grid_around_point(points=points,
                                                    patch_center=(patch_center_x, patch_center_y, patch_center_z),
-                                                   voxel_resolution=0.01,
+                                                   voxel_resolution=0.02,
                                                    num_voxels_per_dim=patch_size)
 
             # import IPython
             # IPython.embed()
 
             grasp_type = self.dataset.y[batch_index, 0]
-            grasp_energy = self.dataset.h5py_dataset['energy'][batch_index]
+            grasp_energy = 1#self.dataset.h5py_dataset['energy'][batch_index]
 
             patch_label = num_uvd_per_rgbd * grasp_type + finger_index
 

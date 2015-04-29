@@ -42,7 +42,7 @@ def pretty_print_time():
 
 
 def evaluate(learning_rate=0.001, n_epochs=2000,
-                    nkerns=[32, 64, 32], num_train_batches=30):
+                    nkerns=[1,96, 64], num_train_batches=30):
     """
     :type learning_rate: float
     :param learning_rate: learning rate used (factor for the stochastic
@@ -60,17 +60,16 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
 
     rng = numpy.random.RandomState(23455)
 
-
     # compute number of minibatches for training, validation and testing
-    n_train_batches = 20
-    n_valid_batches = 10
-    n_test_batches = 5
+    n_train_batches = 50
+    n_valid_batches = 20
+    n_test_batches = 20
     batch_size = 10
 
-    xdim = 32
-    ydim = 32
-    zdim = 32
-    convsize = 3
+    xdim = 71
+    ydim = 71
+    zdim = 71
+    convsize = 8
 
     drop = T.iscalar('drop')
 
@@ -78,7 +77,7 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
     #x = T.matrix('x')   # the data is presented as rasterized images
     dtensor5 = theano.tensor.TensorType('float32', (0,)*5)
     x = dtensor5()
-    y = T.matrix('y')  # the labels are presented as 1D vector of
+    y = T.matrix('y', dtype="float32")  # the labels are presented as 1D vector of
                         # [int] labels
 
     ######################
@@ -86,72 +85,113 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
     ######################
     print '... building the model'
 
-    # Reshape matrix of rasterized images of shape (batch_size, 28 * 28)
-    # to a 4D tensor, compatible with our LeNetConvPoolLayer
-    # (28, 28) is the size of MNIST images.
-    #layer0_input = x.reshape((batch_size, zdim, 1, ydim, xdim))
-
+    print "input"
+    print zdim
+    print xdim
+    print ydim
+    print "conv dim"
+    print convsize
+    print "pool size"
+    print 2
 
     # Construct the first convolutional pooling layer:
     # filtering reduces the image size to (28-5+1 , 28-5+1) = (24, 24)
     # maxpooling reduces this further to (24/2, 24/2) = (12, 12)
     # 4D output tensor is thus of shape (batch_size, nkerns[0], 12, 12)
-    layer0 = ConvLayer3D(
-        rng,
-        input=x,
-        image_shape=(batch_size, zdim, 1, xdim, ydim),
-        filter_shape=(nkerns[0], convsize, 1, convsize, convsize),
-        poolsize=(0, 0), drop=drop
-    )
+    # layer0 = ConvLayer3D(
+    #     rng,
+    #     input=x,
+    #     image_shape=(batch_size, zdim, 1, xdim, ydim),
+    #     filter_shape=(nkerns[0], convsize, 1, convsize, convsize),
+    #     poolsize=2, drop=drop
+    # )
 
-    # Construct the second convolutional pooling layer
-    # filtering reduces the image size to (12-5+1, 12-5+1) = (8, 8)
-    # maxpooling reduces this further to (8/2, 8/2) = (4, 4)
-    # 4D output tensor is thus of shape (nkerns[0], nkerns[1], 4, 4)
 
-    newZ = zdim - convsize + 1
-    newX = xdim - convsize + 1
-    newY = ydim - convsize + 1
+    #72-16+1 = 57
+    #57/2 = 29
+    newZ = numpy.round(zdim - convsize + 1) / 2
+    newX = numpy.round(xdim - convsize + 1) / 2
+    newY = numpy.round(ydim - convsize + 1) / 2
 
+    convsize = 16
+
+    print newZ
+    print newX
+    print newY
+    print "conv dim"
+    print convsize
+    print "pool size"
+    print "None"
 
     layer1 = ConvLayer3D(
         rng,
-        input=layer0.output,
+        #input=layer0.output,
+        input=x,
         image_shape=(batch_size, newZ, nkerns[0], newX, newY),
         filter_shape=(nkerns[1], convsize, nkerns[0], convsize, convsize),
-        poolsize=(0, 0), drop=drop
+        poolsize=None, drop=drop
     )
 
-    # the HiddenLayer being fully-connected, it operates on 2D matrices of
-    # shape (batch_size, num_pixels) (i.e matrix of rasterized images).
-    # This will generate a matrix of shape (batch_size, nkerns[1] * 4 * 4),
-    # or (500, 50 * 4 * 4) = (500, 800) with the default values.
+    newZ = numpy.round(newZ - convsize + 1)
+    newX = numpy.round(newX - convsize + 1)
+    newY = numpy.round(newY - convsize + 1)
 
-    newZ = newZ - convsize + 1
-    newX = newX - convsize + 1
-    newY = newY - convsize + 1
+    print newZ
+    print newX
+    print newY
+    print "conv dim"
+    print convsize
+    print "pool size"
+    print 2
 
     layer2 = ConvLayer3D(
         rng,
         input=layer1.output,
         image_shape=(batch_size, newZ, nkerns[1], newX, newY),
-        filter_shape=(nkerns[2], 1, nkerns[1], 1, 1),
-        poolsize=(0, 0), drop=drop
+        filter_shape=(nkerns[2], convsize, nkerns[1], convsize, convsize),
+        poolsize=2, drop=drop
     )
 
+    newZ = numpy.round(newZ - convsize + 1) / 2
+    newX = numpy.round(newX - convsize + 1) / 2
+    newY = numpy.round(newY - convsize + 1) / 2
+
+    print "input to hidden layer"
+    print newZ
+    print newX
+    print newY
+
+    layer3_input = layer2.output.flatten(2)
+
+    layer3 = HiddenLayer(
+        rng,
+        input=layer3_input,
+        n_in=nkerns[2] * newZ * newY * newX,
+        n_out=1000,
+        activation=leaky_relu, drop=drop
+    )
+
+    layer4 = HiddenLayer(
+        rng,
+        input=layer3.output,
+        n_in=1000,
+        n_out=32,
+        activation=leaky_relu, drop=drop
+    )
 
     # create a list of all model parameters to be fit by gradient descent
-    params = layer2.params + layer1.params + layer0.params
-
-    #L1 = abs(layer0.W).sum() + abs(layer1.W).sum() + abs(layer2.W).sum() + abs(layer3.W).sum()
+    params = layer4.params + layer3.params + layer2.params + layer1.params
 
     # the cost we minimize during training is the NLL of the model
-    cost = layer2.single_pixel_cost(y)
+    #cost = layer3.cross_entropy_error(y)
+    #cost = layer4.single_pixel_cost(y)
+    L1 = abs(layer1.W).sum() + abs(layer2.W).sum()
+    cost = layer4.mean_squared_error(y) + 0.000001*L1
 
     # create a function to compute the mistakes that are made by the model
     test_model = theano.function(
         [x, y],
-        layer2.errors(y),
+        layer4.errors(y),
         givens={
             drop: numpy.cast['int32'](0)
         }, allow_input_downcast=True
@@ -159,13 +199,18 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
 
     validate_model = theano.function(
         [x, y],
-        layer2.errors(y),
+        layer4.errors(y),
         givens={
-
             drop: numpy.cast['int32'](0)
-
         }, allow_input_downcast=True
+    )
 
+    demonstrate_model = theano.function(
+        [x,y],
+        layer4.output,
+        givens={
+            drop: numpy.cast['int32'](0)
+        }, on_unused_input='ignore', allow_input_downcast=True
     )
 
 
@@ -177,8 +222,6 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
     # manually create an update rule for each model parameter. We thus
     # create the updates list by automatically looping over all
     # (params[i], grads[i]) pairs.
-
-
     #RMSprop
     updates = []
     for p, g in zip(params, grads):
@@ -188,18 +231,16 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
         updates.append((MeanSquare, nextMeanSquare))
         updates.append((p, p - learning_rate * g))
 
+    print "About to compile train model"
 
     train_model = theano.function(
         [x,y],
         cost,
         updates=updates,
         givens={
-
             drop: numpy.cast['int32'](1)
-
         }, allow_input_downcast=True
     )
-    # end-snippet-1
 
     ###################
     # TRAIN THE MODEL #
@@ -225,7 +266,8 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
     epoch_count = 0
     done_looping = False
 
-    hdf5_filepath = '/srv/3d_conv_data/training_data/contact_and_potential_grasps-3_23_15_34-3_23_16_35.h5'
+    #hdf5_filepath = '/srv/3d_conv_data/training_data/contact_and_potential_grasps-3_23_15_34-3_23_16_35.h5'
+    hdf5_filepath = '/media/Elements/gdl_data/grasp_datasets/2_raw_gazebo/contact_and_potential_grasps-3_23_15_34-4_28_13_10.h5'
     topo_view_key = 'rgbd'
     y_key = 'grasp_type'
     patch_size = 32
@@ -255,6 +297,7 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
             mini_batch_x, mini_batch_y = train_iterator.next()
 
             cost_ij = train_model(mini_batch_x, mini_batch_y)
+            #print "cost_ij: " + str(cost_ij)
 
             if (mini_batch_count + 1) % validation_frequency == 0:
 
@@ -269,6 +312,9 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
                     mini_batch_x, mini_batch_y = validation_iterator.next()
 
                     validation_losses += validate_model(mini_batch_x, mini_batch_y)
+                    # print "demonstration batch"
+                    # print demonstrate_model(mini_batch_x, mini_batch_y)
+                    # print mini_batch_y
 
                 this_validation_loss = validation_losses/n_valid_batches
                 validation_error.append(this_validation_loss)
@@ -302,10 +348,9 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
                     if not os.path.exists(save_dir):
                         os.makedirs(save_dir)
 
-                    numpy.save(save_dir + '/dropout2layer0', layer0.params)
                     numpy.save(save_dir + '/dropout2layer1', layer1.params)
                     numpy.save(save_dir + '/dropout2layer2', layer2.params)
-                    #numpy.save(save_dir + '/dropout2layer3', layer3.params)
+                    numpy.save(save_dir + '/dropout2layer3', layer3.params)
                     numpy.save(save_dir + '/validation_error', numpy.array(validation_error))
 
                     for j in xrange(n_test_batches):
