@@ -93,7 +93,6 @@ def create_point_cloud_vectorized(rgbd_image, structured=False):
     return np.array((x, y, z)).reshape(3, -1).swapaxes(0, 1)
 
 
-#this creates a 3d occupancy grid based on an rgbd image.
 def create_voxel_grid_around_point(points, patch_center, voxel_resolution=0.001, num_voxels_per_dim=72):
 
     voxel_grid = np.zeros((num_voxels_per_dim,
@@ -101,18 +100,21 @@ def create_voxel_grid_around_point(points, patch_center, voxel_resolution=0.001,
                            num_voxels_per_dim,
                            1))
 
-    #could be improved significantly either numpy magic or multi-threaded
-    for point in points:
+    centered_scaled_points = np.floor((points-patch_center + num_voxels_per_dim/2*voxel_resolution) / voxel_resolution)
 
-        #get x,y,z indice for the grid
-        voxel_index_x, voxel_index_y, voxel_index_z = np.floor((point - patch_center + num_voxels_per_dim/2*voxel_resolution) / voxel_resolution)
+    x_valid = [centered_scaled_points[:, 0] < num_voxels_per_dim]
+    y_valid = [centered_scaled_points[:, 1] < num_voxels_per_dim]
+    z_valid = [centered_scaled_points[:, 2] < num_voxels_per_dim]
 
-        #print voxel_index_x, voxel_index_y, voxel_index_z
-        if 0 < voxel_index_x < num_voxels_per_dim :
-            if 0 < voxel_index_y < num_voxels_per_dim :
-                if 0 < voxel_index_z < num_voxels_per_dim:
-                    #mark voxel at this x,y,z indice as occupied.
-                    voxel_grid[voxel_index_x, voxel_index_y, voxel_index_z, 0] = 1
+    centered_scaled_points = centered_scaled_points[x_valid and y_valid and z_valid]
+    # centered_scaled_points = centered_scaled_points[y_valid]
+    # centered_scaled_points = centered_scaled_points[z_valid]
+
+    csp_int = centered_scaled_points.astype(int)
+
+    mask = (csp_int[:, 0], csp_int[:, 1], csp_int[:, 2], np.zeros((csp_int.shape[0]), dtype=int))
+
+    voxel_grid[mask] = 1
 
     return voxel_grid
 
@@ -135,15 +137,13 @@ class HDF5_PointCloud_Iterator(HDF5_Iterator):
         batch_x = np.zeros((batch_size, patch_size, patch_size, patch_size, 1))
         batch_y = np.zeros((batch_size, num_uvd_per_rgbd * num_grasp_types))
 
-
         rgbs = []
-
-
 
         #go through and append patches to batch_x, batch_y
         for i in range(len(finger_indices)):
             batch_index = batch_indices[i]
             finger_index = finger_indices[i]
+
             u, v, d = self.dataset.h5py_dataset['uvd'][batch_index, finger_index, :]
             rgbd = self.dataset.topo_view[batch_index, :, :, :]
             rgbs.append(np.copy(rgbd[:,:,0:3]))
