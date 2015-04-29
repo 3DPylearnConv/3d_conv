@@ -14,10 +14,9 @@ import math
 class ReconstructionDataset():
 
     def __init__(self,
-                 hdf5_filepath='/srv/3d_conv_data/22_model_big_bird_1000_rot_24x24x24.h5'):
+                 hdf5_filepath='/srv/3d_conv_data/22_model_big_bird_1000_rot_24x24x24_2.h5'):
 
-        with h5py.File(hdf5_filepath, 'w') as h5_dset:
-            self.dset = h5_dset
+        self.dset = h5py.File(hdf5_filepath, 'r')
 
         self.num_examples = self.dset['x'].shape[0]
         self.patch_size = self.dset['x'].shape[1]
