@@ -41,6 +41,7 @@ class HiddenLayer(object):
         :param activation: Non linearity to be applied in the hidden
                            layer
         """
+        print "We are using the correct hidden layer"
         self.input = input
 
         if not n_in:
@@ -92,9 +93,13 @@ class HiddenLayer(object):
         self.params = [self.W, self.b]
 
     def cross_entropy_error(self, y):
-        y = y.flatten(2)
-        L = - T.sum(y* T.log(self.output) + (1 - y) * T.log(1 - self.output), axis=1)
+        #out = self.output
+        eps = 0.00000001
+        out = T.clip(self.output, 0 + eps, 1-eps)
+        #y = y.flatten(2)
+        L = - T.sum( y* T.log(out) + (1 - y) * T.log(1 - out), axis=1)
         cost = T.mean(L)
+
         return cost
 
 
@@ -102,11 +107,16 @@ class HiddenLayer(object):
         return T.sqr(y - self.output).mean()
 
     def errors(self, y):
-        #y=y.flatten(2)
-        #binarizedoutput = T.round(self.output)
-        errRate = T.sqr(y - self.output).mean()
+        #return self.cross_entropy_error(y)
+        y_actual = T.argmax(self.output, axis=1)
+        y_expected = T.argmax(y, axis=1)
+        return T.mean(T.neq(y_actual, y_expected))
 
-        return errRate
+        # y=y.flatten(2)
+        # binarizedoutput = T.round(self.output)
+        # errRate = T.sqr(y - self.output).mean()
+        #
+        # return errRate
 
     def single_pixel_cost(self, y):
         out = self.output[(y > 0.5)]
