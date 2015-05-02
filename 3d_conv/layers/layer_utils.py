@@ -1,6 +1,7 @@
 import theano
 import theano.tensor as T
 import numpy
+import mcubes
 
 
 def relu(x):
@@ -210,3 +211,12 @@ def regularized_loss(predicted, ground_truth, lambda_constant=10):
         loss += theano.tensor.dot(a, b)
 
     return loss/num_examples
+
+
+def voxel_to_mesh(voxel_grid, filename=):
+    '''
+    Note: voxel_grid is expected to be 3-dimensional
+    '''
+    vertices, triangles = mcubes.marching_cubes(voxel_grid, isovalue=0.5)
+    mcubes.export_mesh(vertices, triangles, "meshes/" + filename + ".dae")
+
