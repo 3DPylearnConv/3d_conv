@@ -31,6 +31,11 @@ from layers.layer_utils import *
 from layers.recon_layer import *
 from layers.max_pool_layer_3d import *
 
+def softmax_stable(x):
+    e_x = T.exp(x - x.max(axis=1, keepdims=True))
+    out = e_x / e_x.sum(axis=1, keepdims=True)
+    return out
+
 def pretty_print_time():
     t = time.localtime()
 
@@ -42,34 +47,19 @@ def pretty_print_time():
 
 
 def evaluate(learning_rate=0.001, n_epochs=2000,
-                    nkerns=[1,96, 64], num_train_batches=30):
-    """
-    :type learning_rate: float
-    :param learning_rate: learning rate used (factor for the stochastic
-                          gradient)
-
-    :type n_epochs: int
-    :param n_epochs: maximal number of epochs to run the optimizer
-
-    :type dataset: string
-    :param dataset: path to the dataset used for training /testing (MNIST here)
-
-    :type nkerns: list of ints
-    :param nkerns: number of kernels on each layer
-    """
+                    nkerns=[64, 96, 512], kern_size=[5, 5, 5], num_train_batches=30):
 
     rng = numpy.random.RandomState(23455)
 
     # compute number of minibatches for training, validation and testing
-    n_train_batches = 50
-    n_valid_batches = 20
-    n_test_batches = 20
+    n_train_batches = 10
+    n_valid_batches = 10
+    n_test_batches = 10
     batch_size = 10
 
-    xdim = 71
-    ydim = 71
-    zdim = 71
-    convsize = 8
+    xdim = 36
+    ydim = 36
+    zdim = 36
 
     drop = T.iscalar('drop')
 
@@ -85,76 +75,51 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
     ######################
     print '... building the model'
 
-    print "input"
-    print zdim
-    print xdim
-    print ydim
-    print "conv dim"
-    print convsize
-    print "pool size"
-    print 2
-
     # Construct the first convolutional pooling layer:
     # filtering reduces the image size to (28-5+1 , 28-5+1) = (24, 24)
     # maxpooling reduces this further to (24/2, 24/2) = (12, 12)
     # 4D output tensor is thus of shape (batch_size, nkerns[0], 12, 12)
-    # layer0 = ConvLayer3D(
-    #     rng,
-    #     input=x,
-    #     image_shape=(batch_size, zdim, 1, xdim, ydim),
-    #     filter_shape=(nkerns[0], convsize, 1, convsize, convsize),
-    #     poolsize=2, drop=drop
-    # )
+    layer0 = ConvLayer3D(
+        rng,
+        input=x,
+        image_shape=(batch_size, zdim, 1, xdim, ydim),
+        filter_shape=(nkerns[0], kern_size[0], 1, kern_size[0], kern_size[0]),
+        poolsize=2, drop=drop
+    )
 
 
     #72-16+1 = 57
     #57/2 = 29
-    newZ = numpy.round(zdim - convsize + 1) / 2
-    newX = numpy.round(xdim - convsize + 1) / 2
-    newY = numpy.round(ydim - convsize + 1) / 2
+    newZ = numpy.round(zdim - kern_size[0] + 1) / 2
+    newX = numpy.round(xdim - kern_size[0] + 1) / 2
+    newY = numpy.round(ydim - kern_size[0] + 1) / 2
 
-    convsize = 16
 
-    print newZ
-    print newX
-    print newY
-    print "conv dim"
-    print convsize
-    print "pool size"
-    print "None"
 
     layer1 = ConvLayer3D(
         rng,
-        #input=layer0.output,
-        input=x,
+        input=layer0.output,
+        #input=x,
         image_shape=(batch_size, newZ, nkerns[0], newX, newY),
-        filter_shape=(nkerns[1], convsize, nkerns[0], convsize, convsize),
-        poolsize=None, drop=drop
+        filter_shape=(nkerns[1], kern_size[1], nkerns[0], kern_size[1], kern_size[1]),
+        poolsize=2, drop=drop
     )
 
-    newZ = numpy.round(newZ - convsize + 1)
-    newX = numpy.round(newX - convsize + 1)
-    newY = numpy.round(newY - convsize + 1)
-
-    print newZ
-    print newX
-    print newY
-    print "conv dim"
-    print convsize
-    print "pool size"
-    print 2
+    newZ = numpy.round(newZ - kern_size[1] + 1) / 2
+    newX = numpy.round(newX - kern_size[1] + 1) / 2
+    newY = numpy.round(newY - kern_size[1] + 1) / 2
 
     layer2 = ConvLayer3D(
         rng,
         input=layer1.output,
         image_shape=(batch_size, newZ, nkerns[1], newX, newY),
-        filter_shape=(nkerns[2], convsize, nkerns[1], convsize, convsize),
+        filter_shape=(nkerns[2], kern_size[2], nkerns[1], kern_size[2], kern_size[2]),
         poolsize=2, drop=drop
     )
 
-    newZ = numpy.round(newZ - convsize + 1) / 2
-    newX = numpy.round(newX - convsize + 1) / 2
-    newY = numpy.round(newY - convsize + 1) / 2
+    newZ = numpy.round(newZ - kern_size[2] + 1) / 2
+    newX = numpy.round(newX - kern_size[2] + 1) / 2
+    newY = numpy.round(newY - kern_size[2] + 1) / 2
 
     print "input to hidden layer"
     print newZ
@@ -175,23 +140,32 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
         rng,
         input=layer3.output,
         n_in=1000,
-        n_out=32,
+        n_out=500,
         activation=leaky_relu, drop=drop
     )
 
+
+    out_layer = HiddenLayer(
+        rng,
+        input=layer4.output,
+        n_in=500,
+        n_out=32,
+        activation=softmax_stable, drop=numpy.cast['int32'](0)
+    )
+
     # create a list of all model parameters to be fit by gradient descent
-    params = layer4.params + layer3.params + layer2.params + layer1.params
+    params = out_layer.params + layer4.params + layer3.params + layer2.params + layer1.params + layer0.params
 
     # the cost we minimize during training is the NLL of the model
     #cost = layer3.cross_entropy_error(y)
     #cost = layer4.single_pixel_cost(y)
-    L1 = abs(layer1.W).sum() + abs(layer2.W).sum()
-    cost = layer4.mean_squared_error(y) + 0.000001*L1
+    #L1 = abs(layer1.W).sum() + abs(layer2.W).sum()
+    cost = out_layer.cross_entropy_error(y) #+ 0.0000001*L1
 
     # create a function to compute the mistakes that are made by the model
     test_model = theano.function(
         [x, y],
-        layer4.errors(y),
+        out_layer.errors(y),
         givens={
             drop: numpy.cast['int32'](0)
         }, allow_input_downcast=True
@@ -199,7 +173,7 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
 
     validate_model = theano.function(
         [x, y],
-        layer4.errors(y),
+        out_layer.errors(y),
         givens={
             drop: numpy.cast['int32'](0)
         }, allow_input_downcast=True
@@ -207,7 +181,7 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
 
     demonstrate_model = theano.function(
         [x,y],
-        layer4.output,
+        out_layer.output,
         givens={
             drop: numpy.cast['int32'](0)
         }, on_unused_input='ignore', allow_input_downcast=True
@@ -270,7 +244,7 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
     hdf5_filepath = '/media/Elements/gdl_data/grasp_datasets/2_raw_gazebo/contact_and_potential_grasps-3_23_15_34-4_28_13_10.h5'
     topo_view_key = 'rgbd'
     y_key = 'grasp_type'
-    patch_size = 32
+    patch_size = xdim
 
     train_dataset = PointCloud_HDF5_Dataset(topo_view_key, y_key, hdf5_filepath, patch_size)
     test_dataset = PointCloud_HDF5_Dataset(topo_view_key, y_key, hdf5_filepath, patch_size)
@@ -295,6 +269,11 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
                 print 'training @ iter = ', mini_batch_count
 
             mini_batch_x, mini_batch_y = train_iterator.next()
+            "mini batch_y shape"
+            print mini_batch_y.shape
+
+            # import IPython
+            # IPython.embed()
 
             cost_ij = train_model(mini_batch_x, mini_batch_y)
             #print "cost_ij: " + str(cost_ij)
@@ -348,9 +327,12 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
                     if not os.path.exists(save_dir):
                         os.makedirs(save_dir)
 
+                    numpy.save(save_dir + '/dropout2layer0', layer0.params)
                     numpy.save(save_dir + '/dropout2layer1', layer1.params)
                     numpy.save(save_dir + '/dropout2layer2', layer2.params)
                     numpy.save(save_dir + '/dropout2layer3', layer3.params)
+                    numpy.save(save_dir + '/dropout2layer4', layer4.params)
+                    numpy.save(save_dir + '/dropout2layer5', out_layer.params)
                     numpy.save(save_dir + '/validation_error', numpy.array(validation_error))
 
                     for j in xrange(n_test_batches):
