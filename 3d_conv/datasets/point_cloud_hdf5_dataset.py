@@ -156,7 +156,7 @@ class HDF5_PointCloud_Iterator(HDF5_Iterator):
             points = create_point_cloud_vectorized(rgbd, structured=False)
             patch = create_voxel_grid_around_point(points=points,
                                                    patch_center=(patch_center_x, patch_center_y, patch_center_z),
-                                                   voxel_resolution=0.01,
+                                                   voxel_resolution=0.02,
                                                    num_voxels_per_dim=patch_size)
 
             # import IPython
