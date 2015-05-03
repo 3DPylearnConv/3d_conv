@@ -131,7 +131,7 @@ class reconLayer(object):
 
 def evaluate(learning_rate=0.001, n_epochs=200,
                     dataset='mnist.pkl.gz',
-                    nkerns=[30, 50], batch_size=5):
+                    nkerns=[20, 30], batch_size=32):
     """ Demonstrates lenet on MNIST dataset
 
     :type learning_rate: float
@@ -229,14 +229,14 @@ def evaluate(learning_rate=0.001, n_epochs=200,
         rng,
         input=layer2_input,
         n_in=nkerns[1] * zdim * ydim * xdim,
-        n_out=1000,
+        n_out=100,
         activation=relu, drop=drop
     )
     layer3 = HiddenLayer(
         rng,
         input=layer2.output,
-        n_in=1000,
-        n_out=1500,
+        n_in=100,
+        n_out=100,
         activation=relu, drop=drop
     )
 
@@ -245,7 +245,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
     layer4 = reconLayer(
         rng,
         input=layer3.output,
-        n_in=1500,
+        n_in=100,
         n_out=recon_size,
         activation=T.nnet.sigmoid
     )
@@ -357,8 +357,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
 
 
         train_iterator = train_dataset.iterator(batch_size=batch_size,
-                                                num_batches=n_train_batches,
-                                                mode='even_shuffled_sequential', type='default')
+                                                num_batches=n_train_batches)
 
         for minibatch_index in xrange(n_train_batches):
 
@@ -367,12 +366,19 @@ def evaluate(learning_rate=0.001, n_epochs=200,
             if mini_batch_count % 100 == 0:
                 print 'training @ iter = ', mini_batch_count
 
+            s = time.time()
             mini_batch_x, mini_batch_y = train_iterator.next()
+            e = time.time()
+
+            print "time to generate batch: " + str(e-s)
 
             #mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
             #mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
-
+            s = time.time()
             cost_ij = train_model(mini_batch_x, mini_batch_y)
+            e = time.time()
+
+            print "time to train: " + str(e-s)
 
             if (mini_batch_count + 1) % validation_frequency == 0:
 

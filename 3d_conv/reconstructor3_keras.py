@@ -35,7 +35,9 @@ from layers.layer_utils import downscale_3d
 #from matplotlib import cm
 #from mpl_toolkits.mplot3d import Axes3D
 
-
+from keras.layers.convolutional import *
+from keras.layers.core import *
+from keras.objectives import *
 
 def relu(x):
     return T.maximum(x, 0.0)
@@ -154,73 +156,108 @@ def evaluate(learning_rate=0.001, n_epochs=400,
     ######################
     print '... building the model'
 
+    model = Sequential()
 
-    layer0 = ConvLayer3D(
-        rng,
-        input=x,
-        image_shape=(batch_size, zdim, 1, ydim, xdim),
-        filter_shape=(nkerns[0], convsize, 1, convsize, convsize),
-        poolsize=2, drop=drop
-    )
+    filter_size = 5
+    nb_filter_in = 1
+    nb_filter_out = 64
+    #32-5+1 = 28
+    model.add(Convolution3D(nb_filter=nb_filter_out, stack_size=nb_filter_in, nb_row=filter_size, nb_col=filter_size, nb_depth=filter_size, border_mode='valid'))
+    model.add(MaxPooling3D(pool_size=(2, 2, 2)))
+    model.add(Dropout(.5))
+    #out 14
 
+    filter_size = 3
+    nb_filter_in = nb_filter_out
+    nb_filter_out = 64
+    #14-3+1 = 12
+    model.add(Convolution3D(nb_filter=nb_filter_out, stack_size=nb_filter_in, nb_row=filter_size, nb_col=filter_size, nb_depth=filter_size, border_mode='valid'))
+    model.add(MaxPooling3D(pool_size=(2, 2, 2)))
+    model.add(Dropout(.5))
+    #out 6
 
-    zdim = (zdim - convsize + 1)/2
-    xdim = (xdim - convsize + 1)/2
-    ydim = (ydim - convsize + 1)/2
+    filter_size = 3
+    nb_filter_in = nb_filter_out
+    nb_filter_out = 64
+    #6-3+1 = 4
+    model.add(Convolution3D(nb_filter=nb_filter_out, stack_size=nb_filter_in, nb_row=filter_size, nb_col=filter_size, nb_depth=filter_size, border_mode='valid'))
+    model.add(Dropout(.5))
+    #out 4
 
-    layer05 = ConvLayer3D(
-    rng,
-    input=layer0.output,
-    image_shape=(batch_size, zdim, nkerns[0], ydim, xdim),
-    filter_shape=(nkerns[1], convsize, nkerns[0], convsize, convsize),
-    poolsize=None, drop=drop
-)
+    dim = 4
+    #model.add(Flatten(nb_filter_out*dim*dim*dim))
+    model.add(Flatten())
+    model.add(Dense(nb_filter_out*dim*dim*dim, 3000, init='normal'))
+    model.add(Dense(3000, 4000, init='normal'))
+    model.add(Dense(4000, patch_size*patch_size*patch_size, init='normal'))
 
-    zdim = zdim - convsize + 1
-    xdim = xdim - convsize + 1
-    ydim = ydim - convsize + 1
+#
+#     layer0 = ConvLayer3D(
+#         rng,
+#         input=x,
+#         image_shape=(batch_size, zdim, 1, ydim, xdim),
+#         filter_shape=(nkerns[0], convsize, 1, convsize, convsize),
+#         poolsize=2, drop=drop
+#     )
+#
+#
+#     zdim = (zdim - convsize + 1)/2
+#     xdim = (xdim - convsize + 1)/2
+#     ydim = (ydim - convsize + 1)/2
+#
+#     layer05 = ConvLayer3D(
+#     rng,
+#     input=layer0.output,
+#     image_shape=(batch_size, zdim, nkerns[0], ydim, xdim),
+#     filter_shape=(nkerns[1], convsize, nkerns[0], convsize, convsize),
+#     poolsize=None, drop=drop
+# )
+#
+#     zdim = zdim - convsize + 1
+#     xdim = xdim - convsize + 1
+#     ydim = ydim - convsize + 1
+#
+#     layer1 = ConvLayer3D(
+#         rng,
+#         input=layer05.output,
+#         image_shape=(batch_size, zdim, nkerns[1], ydim, xdim),
+#         filter_shape=(nkerns[2], convsize, nkerns[1], convsize, convsize),
+#         poolsize=None, drop=drop
+#     )
+#
+#
+#     layer2_input = layer1.output.flatten(2)
+#
+#     zdim = zdim - convsize + 1
+#     xdim = xdim - convsize + 1
+#     ydim = ydim - convsize + 1
+#
+#     layer2 = HiddenLayer(
+#         rng,
+#         input=layer2_input,
+#         n_in=nkerns[2] * zdim * ydim * xdim,
+#         n_out=3000,
+#         activation=relu, drop=drop
+#     )
+#     layer3 = HiddenLayer(
+#         rng,
+#         input=layer2.output,
+#         n_in=3000,
+#         n_out=4000,
+#         activation=relu, drop=drop
+#     )
 
-    layer1 = ConvLayer3D(
-        rng,
-        input=layer05.output,
-        image_shape=(batch_size, zdim, nkerns[1], ydim, xdim),
-        filter_shape=(nkerns[2], convsize, nkerns[1], convsize, convsize),
-        poolsize=None, drop=drop
-    )
-
-
-    layer2_input = layer1.output.flatten(2)
-
-    zdim = zdim - convsize + 1
-    xdim = xdim - convsize + 1
-    ydim = ydim - convsize + 1
-
-    layer2 = HiddenLayer(
-        rng,
-        input=layer2_input,
-        n_in=nkerns[2] * zdim * ydim * xdim,
-        n_out=3000,
-        activation=relu, drop=drop
-    )
-    layer3 = HiddenLayer(
-        rng,
-        input=layer2.output,
-        n_in=3000,
-        n_out=4000,
-        activation=relu, drop=drop
-    )
-
-
-    # classify the values of the fully-connected sigmoidal layer
-    layer4 = reconLayer(
-        rng,
-        input=layer3.output,
-        n_in=4000,
-        n_out=recon_size,
-        activation=T.nnet.sigmoid
-    )
+    #
+    # # classify the values of the fully-connected sigmoidal layer
+    # layer4 = reconLayer(
+    #     rng,
+    #     input=layer3.output,
+    #     n_in=4000,
+    #     n_out=recon_size,
+    #     activation=T.nnet.sigmoid
+    # )
     # the cost we minimize during training is the NLL of the model
-    cost = layer4.cross_entropy_error(y)
+    cost = cross_entropy_error(model.layers[-1], y)
     # create a list of all model parameters to be fit by gradient descent
     params = layer4.params + layer3.params + layer2.params + layer1.params + layer05.params + layer0.params
 

@@ -331,8 +331,11 @@ def evaluate(learning_rate=0.001, n_epochs=400,
 
             #mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
             #mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
-
+            s = time.time()
             cost_ij = train_model(mini_batch_x, mini_batch_y)
+            e = time.time()
+
+            print "time to train: " + str(e-s)
 
             if (mini_batch_count + 1) % validation_frequency == 0:
 

@@ -41,7 +41,6 @@ class HiddenLayer(object):
         :param activation: Non linearity to be applied in the hidden
                            layer
         """
-        print "We are using the correct hidden layer"
         self.input = input
 
         if not n_in:
@@ -83,8 +82,8 @@ class HiddenLayer(object):
         self.W = W
         self.b = b
 
-        lin_output = T.dot(input, self.W) + self.b
-        output = activation(lin_output)
+        self.lin_output = T.dot(input, self.W) + self.b
+        output = activation(self.lin_output)
         droppedOutput = dropout(rng, output, p)
 
         self.output = T.switch(T.neq(drop, 0), droppedOutput, output)
@@ -94,7 +93,7 @@ class HiddenLayer(object):
 
     def cross_entropy_error(self, y):
         #out = self.output
-        eps = 0.00000001
+        eps = 0.000001
         out = T.clip(self.output, 0 + eps, 1-eps)
         #y = y.flatten(2)
         L = - T.sum( y* T.log(out) + (1 - y) * T.log(1 - out), axis=1)
@@ -102,6 +101,8 @@ class HiddenLayer(object):
 
         return cost
 
+    def negative_log_likelihood(self, y):
+        return -T.mean(T.log(self.output)[T.arange(y.shape[0]), T.argmax(y)])
 
     def mean_squared_error(self, y):
         return T.sqr(y - self.output).mean()
