@@ -41,7 +41,6 @@ class HiddenLayer(object):
         :param activation: Non linearity to be applied in the hidden
                            layer
         """
-        print "We are using the correct hidden layer"
         self.input = input
 
         if not n_in:
