@@ -8,7 +8,7 @@ from layers.max_pool_layer_3d import *
 class ConvLayer3D(Layer):
     """3D Layer of a convolutional network """
 
-    def __init__(self, rng, input, filter_shape, image_shape, drop, poolsize=None, p=0.5):
+    def __init__(self, rng, input, filter_shape, image_shape, drop, poolsize=None, p=0.5, W=None, b=None):
         """
         Allocate a layer with shared variable internal parameters.
 
@@ -44,12 +44,17 @@ class ConvLayer3D(Layer):
         self.input = input
 
         # initialize weights with random weights
-        self.W = theano.shared(numpy.asarray(numpy.random.normal(loc=0., scale=.01, size=filter_shape), dtype=theano.config.floatX),
-            borrow=True)
+        if W is None:
+            W = theano.shared(numpy.asarray(numpy.random.normal(loc=0., scale=.01, size=filter_shape), dtype=theano.config.floatX),
+                borrow=True)
 
         # the bias is a 1D tensor -- one bias per output feature map
-        b_values = numpy.ones((filter_shape[0],), dtype=theano.config.floatX)
-        self.b = theano.shared(value=b_values, borrow=True)
+        if b is None:
+            b_values = numpy.ones((filter_shape[0],), dtype=theano.config.floatX)
+            b = theano.shared(value=b_values, borrow=True)
+
+        self.b = b
+        self.W = W
 
         # convolve input feature maps with filters
         conv_out = conv3d(
