@@ -225,10 +225,13 @@ def voxel_to_mesh(filename_in, filename_out):
 def theano_jaccard_similarity(a, b):
     '''
     Returns the number of pixels of the intersection of two voxel grids divided by the number of pixels in the union.
-    The inputs are expected to be theano 5D tensors in BZCXY format.
+    A return value of 1 means that the two binary grids are identical.
+    The inputs are expected to be theano tensors where we flatten all dimensions except for the first, and we average the simmilarity accross the 1st dimension.
     '''
-    return T.mean( T.sum(a*b,       axis=(1, 2, 3, 4)) \
-                    /T.sum((a+b)-a*b, axis=(1, 2, 3, 4)) )
+    a = a.flatten(ndim=2)
+    b = b.flatten(ndim=2)
+    return T.mean( T.sum(a*b,       axis=1) \
+                    /T.sum((a+b)-a*b, axis=1) )
 
 
 def numpy_jaccard_similarity(a, b):
