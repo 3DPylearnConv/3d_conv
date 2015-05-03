@@ -4,7 +4,9 @@ from datasets.reconstruction_dataset import ReconstructionDataset, build_trainin
 from multiprocessing import Pool
 
 PATCH_SIZE = 24
+
 OUT_FILE_PATH = "big_bird_uniform_rot_24x24x24_1_5cm.h5"
+
 
 from multiprocessing import Process, Queue
 
@@ -27,27 +29,31 @@ def reader(index_queue, examples_queue):
 
 if __name__=='__main__':
 
-    models_dir = "/home/jvarley/models2/"
-    pc_dir = "/home/jvarley/gdl_ws/src/train/generate_gazebo_output/src/reconstruction_data_uniform_rotations/"
+    models_dir = "/home/jvarley/.gazebo/old_shrec_uncentered_models/"
+    pc_dir = "/media/Extention/gazebo_reconstruction_data_uniform_rotations_shrec/"
 
     recon_dataset = ReconstructionDataset(models_dir, pc_dir, patch_size=PATCH_SIZE)
     num_examples = recon_dataset.get_num_examples()
 
+
     print("Number of examples: " + str(num_examples))
-    with h5py.File(OUT_FILE_PATH, 'w') as h5_dset:
+    h5_dset = h5py.File(OUT_FILE_PATH, 'w')
 
-        h5_dset.create_dataset('x', (num_examples, PATCH_SIZE, PATCH_SIZE, PATCH_SIZE, 1), chunks=(100, PATCH_SIZE, PATCH_SIZE, PATCH_SIZE, 1))
-        h5_dset.create_dataset('y', (num_examples, PATCH_SIZE, PATCH_SIZE, PATCH_SIZE, 1), chunks=(100, PATCH_SIZE, PATCH_SIZE, PATCH_SIZE, 1))
+    h5_dset.create_dataset('x', (num_examples, PATCH_SIZE, PATCH_SIZE, PATCH_SIZE, 1), chunks=(100, PATCH_SIZE, PATCH_SIZE, PATCH_SIZE, 1))
+    h5_dset.create_dataset('y', (num_examples, PATCH_SIZE, PATCH_SIZE, PATCH_SIZE, 1), chunks=(100, PATCH_SIZE, PATCH_SIZE, PATCH_SIZE, 1))
 
-        h5_dset.create_dataset('single_view_pointcloud_filepath', (num_examples, 1), dtype=string_dtype)
-        h5_dset.create_dataset('pose_filepath', (num_examples, 1), dtype=string_dtype)
-        h5_dset.create_dataset('model_filepath', (num_examples, 1), dtype=string_dtype)
-        
+
+    h5_dset.create_dataset('single_view_pointcloud_filepath', (num_examples, 1), dtype=string_dtype)
+    h5_dset.create_dataset('pose_filepath', (num_examples, 1), dtype=string_dtype)
+    h5_dset.create_dataset('model_filepath', (num_examples, 1), dtype=string_dtype)
+
+    h5_dset.close()
     index_queue = Queue()
-    examples_queue = Queue(maxsize=30)
+    examples_queue = Queue(maxsize=100)
 
     print("staring readers")
-    num_readers = 2
+    num_readers = 6
+
     for i in range(num_readers):
         reader_p = Process(target=reader, args=(index_queue, examples_queue))
         reader_p.daemon = True
@@ -81,7 +87,5 @@ if __name__=='__main__':
         h5_dset['x'][index] = x
         h5_dset['y'][index] = y
         h5_dset.close()
-
-
 
 

@@ -1,6 +1,7 @@
 import theano
 import theano.tensor as T
 import numpy
+import mcubes
 
 
 def relu(x):
@@ -210,3 +211,30 @@ def regularized_loss(predicted, ground_truth, lambda_constant=10):
         loss += theano.tensor.dot(a, b)
 
     return loss/num_examples
+
+
+def voxel_to_mesh(filename_in, filename_out):
+    '''
+    Note: voxel_grid is expected to be 3-dimensional
+    '''
+    voxel_grid = numpy.load(filename_in)
+    vertices, triangles = mcubes.marching_cubes(voxel_grid, isovalue=0.5)
+    mcubes.export_mesh(vertices, triangles, "mesh_out/" + filename_out + ".dae")
+
+
+def theano_jaccard_similarity(a, b):
+    '''
+    Returns the number of pixels of the intersection of two voxel grids divided by the number of pixels in the union.
+    The inputs are expected to be theano 5D tensors in BZCXY format.
+    '''
+    return T.mean( T.sum(a*b,       axis=(1, 2, 3, 4)) \
+                    /T.sum((a+b)-a*b, axis=(1, 2, 3, 4)) )
+
+
+def numpy_jaccard_similarity(a, b):
+    '''
+    Returns the number of pixels of the intersection of two voxel grids divided by the number of pixels in the union.
+    The inputs are expected to be numpy 5D ndarrays in BZCXY format.
+    '''
+    return np.mean( np.sum(a*b,       axis=(1, 2, 3, 4)) \
+                    /np.sum((a+b)-a*b, axis=(1, 2, 3, 4)) )
