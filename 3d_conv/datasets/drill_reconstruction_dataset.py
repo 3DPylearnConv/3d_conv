@@ -36,10 +36,7 @@ class DrillReconstructionDataset():
                 pose_file = pc_dir + model_name + "/" + file_name.replace("pc", "pose")
                 self.examples.append((pointcloud_file, pose_file, self.model_fullfilename))
 
-
     def get_num_examples(self):
-
-
         return len(self.examples)
 
 
@@ -107,17 +104,30 @@ def build_training_example(model_filepath, pose_filepath, single_view_pointcloud
     # IPython.embed()
     return x,y
 
-def create_voxel_grid_around_point(points, patch_center, voxel_resolution=0.001, num_voxels_per_dim=72):
 
+def create_voxel_grid_around_point(points, patch_center, voxel_resolution=0.001, num_voxels_per_dim=72):
 
     voxel_grid = np.zeros((num_voxels_per_dim,
                            num_voxels_per_dim,
                            num_voxels_per_dim,
                            1))
-    centered_scaled_points = np.floor((points - patch_center + num_voxels_per_dim / 2 * voxel_resolution) / voxel_resolution)
+
+    centered_scaled_points = np.floor((points-patch_center + num_voxels_per_dim/2*voxel_resolution) / voxel_resolution)
+
+    x_valid = [centered_scaled_points[:, 0] < num_voxels_per_dim]
+    y_valid = [centered_scaled_points[:, 1] < num_voxels_per_dim]
+    z_valid = [centered_scaled_points[:, 2] < num_voxels_per_dim]
+
+    centered_scaled_points = centered_scaled_points[x_valid and y_valid and z_valid]
+    # centered_scaled_points = centered_scaled_points[y_valid]
+    # centered_scaled_points = centered_scaled_points[z_valid]
+
     csp_int = centered_scaled_points.astype(int)
+
     mask = (csp_int[:, 0], csp_int[:, 1], csp_int[:, 2], np.zeros((csp_int.shape[0]), dtype=int))
+
     voxel_grid[mask] = 1
+
     return voxel_grid
 
 
