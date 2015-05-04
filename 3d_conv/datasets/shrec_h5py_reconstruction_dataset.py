@@ -77,12 +77,24 @@ class ReconstructionIterator(collections.Iterator):
         batch_x = np.zeros((self.batch_size, patch_size, patch_size, patch_size, 1), dtype=np.float32)
         batch_y = np.zeros((self.batch_size, patch_size, patch_size, patch_size, 1), dtype=np.float32)
 
-        for i in range(len(selection_indices)):
+        for i in range(self.batch_size):
 
-            index = selection_indices[i]
+            x = None
+            y = None
 
-            x = self.dataset.dset['x'][index]
-            y = self.dataset.dset['y'][index]
+            while True:
+
+                selection_indices = np.random.choice(self.dataset.indices, size=1, replace=False)
+
+                index = selection_indices[i]
+
+                x = self.dataset.dset['x'][index]
+                y = self.dataset.dset['y'][index]
+                if y.max() != 0:
+                    break
+                # else:
+                #     print self.dataset.dset['model_filepath']
+
 
             # viz.visualize_3d(x)
             # viz.visualize_3d(y)
