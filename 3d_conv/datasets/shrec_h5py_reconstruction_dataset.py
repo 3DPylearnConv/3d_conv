@@ -70,7 +70,6 @@ class ReconstructionIterator(collections.Iterator):
         return self
 
     def next(self):
-        selection_indices = np.random.choice(self.dataset.indices, size=self.batch_size, replace=False)
 
         patch_size = self.dataset.patch_size
 
@@ -84,9 +83,7 @@ class ReconstructionIterator(collections.Iterator):
 
             while True:
 
-                selection_indices = np.random.choice(self.dataset.indices, size=1, replace=False)
-
-                index = selection_indices[i]
+                index = np.random.choice(self.dataset.indices, size=1, replace=False)
 
                 x = self.dataset.dset['x'][index]
                 y = self.dataset.dset['y'][index]
