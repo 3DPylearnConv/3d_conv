@@ -83,7 +83,7 @@ class ReconstructionIterator(collections.Iterator):
 
             while True:
 
-                index = np.random.choice(self.dataset.indices, size=1, replace=False)
+                index = np.random.choice(self.dataset.indices, size=1, replace=False)[0]
 
                 x = self.dataset.dset['x'][index]
                 y = self.dataset.dset['y'][index]
