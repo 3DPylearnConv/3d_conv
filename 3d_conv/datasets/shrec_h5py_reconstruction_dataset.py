@@ -3,10 +3,12 @@ import numpy as np
 import os
 import collections
 
-import binvox_rw
-import visualization.visualize as viz
-import tf_conversions
-import PyKDL
+
+#import binvox_rw
+#import visualization.visualize as viz
+#import tf_conversions
+#import PyKDL
+
 import h5py
 
 import math
@@ -14,7 +16,7 @@ import math
 class ReconstructionDataset():
 
     def __init__(self,
-                 hdf5_filepath='/srv/3d_conv_data/22_model_big_bird_1000_rot_24x24x24_2.h5', mode='train', train_indices_file="shrec_recon_indices.npy"):
+                 hdf5_filepath='../data/shrec_24x24x24.h5', mode='train', train_indices_file="shrec_recon_indices.npy"):
 
         self.mode = mode
         self.dset = h5py.File(hdf5_filepath, 'r')
@@ -25,7 +27,9 @@ class ReconstructionDataset():
             train_selection = np.load(train_indices_file)
         else:
             train_selection = np.random.rand(self.num_examples)
-            train_selection =train_selection > .2
+
+            train_selection = train_selection > .2
+
             np.save(train_indices_file, train_selection)
 
         if mode is 'train':
@@ -66,7 +70,7 @@ class ReconstructionIterator(collections.Iterator):
         return self
 
     def next(self):
-        selection_indices = np.random.choice(self.dataset.indices, size=(self.batch_size), replace=False)
+        selection_indices = np.random.choice(self.dataset.indices, size=self.batch_size, replace=False)
 
         patch_size = self.dataset.patch_size
 
