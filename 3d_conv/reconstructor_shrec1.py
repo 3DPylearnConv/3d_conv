@@ -113,13 +113,13 @@ class reconLayer(object):
 
 
 
-def evaluate(learning_rate=0.001, n_epochs=200,
+def evaluate(learning_rate=0.001, n_epochs=1000,
                     dataset='mnist.pkl.gz',
                     nkerns=[60,65,70], batch_size=30):
 
 
     rng = numpy.random.RandomState(23455)
-    n_train_batches = 20
+    n_train_batches = 80
     n_valid_batches = 3
     n_test_batches = 20
 
@@ -437,7 +437,7 @@ def evaluate(learning_rate=0.001, n_epochs=200,
                 print(('     epoch %i, minibatch %i/%i, test error of '
                        'best model %f %%') %
                       (epoch_count, minibatch_index + 1, n_train_batches,
-                       test_losses[0] * 100.))
+                       this_validation_loss[0] * 100.))
                     
 
             if patience <= mini_batch_count:
