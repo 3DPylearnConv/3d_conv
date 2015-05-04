@@ -303,8 +303,8 @@ def evaluate(learning_rate=0.001, n_epochs=1000,
 
 
     train_dataset = ReconstructionDataset(hdf5_filepath='../data/shrec_24x24x24.h5', mode='train')
-    #test_dataset = ReconstructionDataset(hdf5_filepath='../data/drill_rot_yaw_24x24x24.h5', type_is_training=False, num_angle_divisions=4, percent_testing=.7)
-    validation_dataset = ReconstructionDataset(hdf5_filepath='../data/shrec_24x24x24.h5', mode='not_train')
+    #test_dataset = ReconstructionDataset(hdf5_filepath='../data/drill_rot_yaw_24x24x24.h5', mode='train')
+    validation_dataset = ReconstructionDataset(hdf5_filepath='../data/shrec_24x24x24.h5', mode='test')
 
     epoch_count = 0
 
@@ -356,8 +356,24 @@ def evaluate(learning_rate=0.001, n_epochs=1000,
                 this_validation_loss[1] = validation_losses[1]/n_valid_batches
 
 
+                training_losses = [0,0]
 
+              
+                for i in xrange(n_valid_batches):
+                    mini_batch_x, mini_batch_y = train_iterator.next()
 
+                    #mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
+                    #mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
+                    output = validate_model(mini_batch_x, mini_batch_y)
+
+                    training_losses[0] += output[0]
+                    training_losses[1] += output[1]
+                    #validation_losses[0] += validation_output[0]
+                    #validation_losses[1] += validation_output[1]
+                    
+
+                training_losses[0] = training_losses[0]/n_valid_batches
+                training_losses[1] = training_losses[1]/n_valid_batches
                 print "training cost: ", cost_ij
                 print('epoch %i, minibatch %i/%i, validation error %f %%' %
                       (epoch_count, minibatch_index + 1, n_train_batches,
@@ -430,7 +446,7 @@ def evaluate(learning_rate=0.001, n_epochs=1000,
                 """
 
                 f = open("../shrec/run1/percenttest20kerns606570hidden35004000log.txt", "a")
-                toOutput = "%i %f %f %f\n" % (epoch_count, cost_ij, this_validation_loss[0], this_validation_loss[1])
+                toOutput = "%i %f %f %f %f %f\n" % (epoch_count, cost_ij, training_losses[0], training_losses[1], this_validation_loss[0], this_validation_loss[1])
                 f.write(toOutput)
                 f.close()
 
