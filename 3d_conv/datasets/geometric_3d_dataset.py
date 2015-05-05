@@ -11,7 +11,7 @@ class Geometric3DDataset:
     # Task types
     CLASSIFICATION_TASK = 0
     KINECT_COMPLETION_TASK = 1
-    KINECT_SHADOW_COMPLETION_TASK = 2
+    KINECT_SHADOW_CARVING_TASK = 2
     HALF_COMPLETION_TASK = 3
 
     def __init__(self,
@@ -132,7 +132,7 @@ class Geometric3dIterator():
             labels = self.__generate_solid_figures(
                 geometry_types=(Geometric3DDataset.SPHERE_TYPE,) * self.batch_size)
             data = self.__kinect_scan(labels, also_fill_shadow=False)
-        elif self.task == Geometric3DDataset.KINECT_SHADOW_COMPLETION_TASK:
+        elif self.task == Geometric3DDataset.KINECT_SHADOW_CARVING_TASK:
             labels = self.__generate_solid_figures(
                 geometry_types=(Geometric3DDataset.SPHERE_TYPE,) * self.batch_size)
             data = self.__kinect_scan(labels, also_fill_shadow=True)
