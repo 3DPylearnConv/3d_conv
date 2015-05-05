@@ -8,9 +8,14 @@ OUT_FILE_PATH = "drill_rot_yaw_24x24x24.h5"
 from multiprocessing import Process, Queue
 
 def read(index):
-    single_view_pointcloud_filepath = drill_dataset.examples[index][0]
-    pose_filepath = drill_dataset.examples[index][1]
-    model_filepath = drill_dataset.examples[index][2]
+    # single_view_pointcloud_filepath = drill_dataset.examples[index][0]
+    # pose_filepath = drill_dataset.examples[index][1]
+    # model_filepath = drill_dataset.examples[index][2]
+    index_string = str(index)
+
+    single_view_pointcloud_filepath = '/srv/3d_conv_data/gazebo_reconstruction_drill_yaw_only/pointclouds/cordless_drill/_0_0_' + index_string + '_pc.npy'
+    pose_filepath = '/srv/3d_conv_data/gazebo_reconstruction_drill_yaw_only/pointclouds/cordless_drill/_0_0_' + index_string + '_pose.npy'
+    model_filepath = '/srv/3d_conv_data/gazebo_reconstruction_drill_yaw_only/models/cordless_drill.binvox'
     x, y = build_training_example(model_filepath, pose_filepath, single_view_pointcloud_filepath, PATCH_SIZE)
     return x,y
 

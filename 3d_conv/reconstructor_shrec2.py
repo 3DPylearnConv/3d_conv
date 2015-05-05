@@ -21,7 +21,7 @@ from theano.tensor.nnet import conv
 from theano.tensor.nnet.conv3d2d import *
 
 from logistic_sgd import LogisticRegression
-#from datasets.reconstruction_dataset import ReconstructionDataset
+from datasets.shrec_h5py_reconstruction_dataset import ReconstructionDataset
 #from visualization.visualize import *
 
 
@@ -45,29 +45,6 @@ def dropout(rng, values, p):
     mask = srng.binomial(n=1, p=p, size=values.shape, dtype=theano.config.floatX)
     output =  values * mask
     return  numpy.cast[theano.config.floatX](1.0/p) * output
-
-
-# loads saved training batches 
-class batchServer(object):
-    def __init__(self, num_batches, batch_size, num_per_file, num_files):
-        self.num_batches = num_batches
-        self.batchCount = 0
-        self.batch_size = batch_size
-        self.indices = numpy.arange(num_files)
-
-        numpy.random.shuffle(self.indices)
-        self.counter = 0
-
-    def next(self):
-        pklfile = open("../reconData/batchData/bb24batch%d.pkl" % self.indices[self.counter], 'rb')
-        fromDisk = cPickle.load(pklfile)
-        batch_x, batch_y = fromDisk
-        self.counter += 1
-        return batch_x, batch_y
-
-
-
-
 
 
 class reconLayer(object):
@@ -114,19 +91,37 @@ class reconLayer(object):
 
         return errRate
 
+    def jaccard_error(self,y):
+        binarizedoutput = T.round(self.output)
+        binarizedoutput = binarizedoutput.reshape((1,24,1,24,24))
+        error = theano_jaccard_similarity(binarizedoutput, y)
+        return error
+
     def return_output(self):
         return self.output
 
+    def both_errors(self, y):
+        binarizedoutput = T.round(self.output)
+        
+        jaccard_error = theano_jaccard_similarity(binarizedoutput, y)
+        y=y.flatten(2)
+        percent_error = T.mean(T.neq(binarizedoutput, y))
+        errors = [percent_error, jaccard_error]
+        return errors
 
-def evaluate(learning_rate=0.001, n_epochs=400,
+
+
+
+
+def evaluate(learning_rate=0.001, n_epochs=1000,
                     dataset='mnist.pkl.gz',
-                    nkerns=[45,55,65], batch_size=20):
+                    nkerns=[60,65,70], batch_size=30):
 
 
     rng = numpy.random.RandomState(23455)
-    n_train_batches = 50
+    n_train_batches = 80
     n_valid_batches = 3
-    n_test_batches = 3
+    n_test_batches = 20
 
     original_size = 24
     downsample_factor = 1
@@ -231,14 +226,14 @@ def evaluate(learning_rate=0.001, n_epochs=400,
     # create a function to compute the mistakes that are made by the model
     test_model = theano.function(
         [x,y],
-        layer4.errors(y),
+        layer4.both_errors(y),
         givens={
             drop: numpy.cast['int32'](0)
         }, allow_input_downcast=True    )
 
     validate_model = theano.function(
         [x,y],
-        layer4.errors(y),
+        layer4.both_errors(y),
         givens={
 
             drop: numpy.cast['int32'](0)       }, allow_input_downcast=True
@@ -300,15 +295,16 @@ def evaluate(learning_rate=0.001, n_epochs=400,
 
     best_validation_loss = numpy.inf
     best_iter = 0
-    test_score = 0.
+    test_score = [0,0]
     start_time = time.clock()
 
     done_looping = False
+    patch_size = original_size
 
 
-    #train_dataset = ReconstructionDataset(patch_size=24)
-    #test_dataset = ReconstructionDataset(patch_size=32)
-    #validation_dataset = ReconstructionDataset(patch_size=24)
+    train_dataset = ReconstructionDataset(hdf5_filepath='../data/shrec_24x24x24.h5', mode='train')
+    #test_dataset = ReconstructionDataset(hdf5_filepath='../data/drill_rot_yaw_24x24x24.h5', mode='train')
+    validation_dataset = ReconstructionDataset(hdf5_filepath='../data/shrec_24x24x24.h5', mode='test')
 
     epoch_count = 0
 
@@ -317,7 +313,7 @@ def evaluate(learning_rate=0.001, n_epochs=400,
         epoch_count += 1
 
 
-        train_iterator = batchServer(num_batches=50, batch_size=20, num_per_file=20, num_files=50)
+        train_iterator = train_dataset.iterator(batch_size=batch_size, num_batches=n_train_batches)
 
 
         for minibatch_index in xrange(n_train_batches):
@@ -331,18 +327,16 @@ def evaluate(learning_rate=0.001, n_epochs=400,
 
             #mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
             #mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
-            s = time.time()
+
             cost_ij = train_model(mini_batch_x, mini_batch_y)
-            e = time.time()
-
-            print "time to train: " + str(e-s)
-
             if (mini_batch_count + 1) % validation_frequency == 0:
+                this_validation_loss = [0,0]
 
-                validation_iterator = batchServer(num_batches=50, batch_size=20, num_per_file=20, num_files=50)
+
+                validation_iterator = validation_dataset.iterator(batch_size=batch_size, num_batches=n_valid_batches)
 
                 # compute zero-one loss on validation set
-                validation_losses = 0
+                validation_losses = [0,0]
 
               
                 for i in xrange(n_valid_batches):
@@ -350,21 +344,46 @@ def evaluate(learning_rate=0.001, n_epochs=400,
 
                     #mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
                     #mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
+                    output = validate_model(mini_batch_x, mini_batch_y)
 
-                    validation_losses += validate_model(mini_batch_x, mini_batch_y)
+                    validation_losses[0] += output[0]
+                    validation_losses[1] += output[1]
+                    #validation_losses[0] += validation_output[0]
+                    #validation_losses[1] += validation_output[1]
+                    
 
-                this_validation_loss = validation_losses/n_valid_batches
+                this_validation_loss[0] = validation_losses[0]/n_valid_batches
+                this_validation_loss[1] = validation_losses[1]/n_valid_batches
 
+
+                training_losses = [0,0]
+
+              
+                for i in xrange(n_valid_batches):
+                    mini_batch_x, mini_batch_y = train_iterator.next()
+
+                    #mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
+                    #mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
+                    output = validate_model(mini_batch_x, mini_batch_y)
+
+                    training_losses[0] += output[0]
+                    training_losses[1] += output[1]
+                    #validation_losses[0] += validation_output[0]
+                    #validation_losses[1] += validation_output[1]
+                    
+
+                training_losses[0] = training_losses[0]/n_valid_batches
+                training_losses[1] = training_losses[1]/n_valid_batches
                 print "training cost: ", cost_ij
                 print('epoch %i, minibatch %i/%i, validation error %f %%' %
                       (epoch_count, minibatch_index + 1, n_train_batches,
-                       this_validation_loss * 100.))
+                       this_validation_loss[0] * 100.))
 
 
                 # get 1 example for demonstrating the model:
+                """
 
-
-                if epoch_count > 0:
+                if epoch_count > 400:
                     mini_batch_x, mini_batch_y = validation_iterator.next()
                     #mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
                     #mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
@@ -372,21 +391,12 @@ def evaluate(learning_rate=0.001, n_epochs=400,
                     img = demonstrate_model(mini_batch_x, mini_batch_y)
 
 
-                    for i in xrange(3):
+                    for i in xrange(2):
 
-
+                        
                         given = mini_batch_x[i,:].reshape(full_dimension,full_dimension,full_dimension)
-                        """
-                        #print given
+                        
 
-
-                        toPlot = numpy.asarray(given.reshape(14,7,14))
-                        x,y,z = toPlot.nonzero()
-                        fig = plt.figure()
-                        ax = fig.add_subplot(111,projection='3d')
-                        ax.scatter(x,-y,z, zdir='z', c= 'red')
-                        plt.show()
-                        """
 
                         result = img[i,:].reshape(full_dimension,full_dimension,full_dimension)
 
@@ -396,62 +406,67 @@ def evaluate(learning_rate=0.001, n_epochs=400,
                         answer = answer.reshape(full_dimension,full_dimension,full_dimension)
 
                         toSave = [given, result, answer]
-                        output = open("../reconData/eighthrun/shapes%depoch%d.pkl" % (epoch_count, i), 'wb')
+                        output = open("../reconUniform/run3/shapes%depoch%d.pkl" % (epoch_count, i), 'wb')
                         cPickle.dump(toSave,output)
                         output.close()
-                f = open("../reconData/eighthrun/eigthrunmaxpoolkerns405060log.txt", "a")
-                toOutput = "%i %f %f\n" % (epoch_count, cost_ij, this_validation_loss)
+
+                    """
+
+                if this_validation_loss[0] < best_validation_loss:
+                    best_validation_loss = this_validation_loss[0]
+                    numpy.save('../shrec/run1/layer0.npy', layer0.params)
+                    numpy.save('../shrec/run1/layer1.npy', layer1.params)
+                    numpy.save('../shrec/run1/layer05.npy', layer05.params)
+                    numpy.save('../shrec/run1/layer2.npy', layer2.params)
+                    numpy.save('../shrec/run1/layer3.npy', layer3.params)
+                    numpy.save('../shrec/run1/layer4.npy', layer4.params) 
+                          
+                """
+               
+                test_losses = [0,0]
+
+                test_iterator = test_dataset.iterator(batch_size=batch_size, num_batches=n_valid_batches)
+
+
+                batch_x, batch_y = test_iterator.next()
+                num_actual_test_batches = batch_x.shape[0]
+                test_batch_indices = numpy.random.choice(numpy.arange(num_actual_test_batches), size=(1, batch_size), replace=False).flatten()
+
+                batch_x_selection = numpy.zeros((batch_size, patch_size, 1, patch_size, patch_size), dtype=numpy.float32)
+                batch_y_selection = numpy.zeros((batch_size, patch_size, 1, patch_size, patch_size), dtype=numpy.float32) 
+
+
+                for j in xrange(batch_size):
+                    batch_x_selection[j,:,:,:,:] = batch_x[test_batch_indices[j],:,:,:,:]
+                    batch_y_selection[j,:,:,:,:] = batch_y[test_batch_indices[j],:,:,:,:]
+
+                test_output = test_model(batch_x_selection, batch_y_selection)
+                test_losses[0] = test_output[0]
+                test_losses[1] = test_output[1]
+                """
+
+                f = open("../shrec/run1/percenttest20kerns606570hidden35004000log.txt", "a")
+                toOutput = "%i %f %f %f %f %f\n" % (epoch_count, cost_ij, training_losses[0], training_losses[1], this_validation_loss[0], this_validation_loss[1])
                 f.write(toOutput)
                 f.close()
 
-
-                """
-                # if we got the best validation score until now
-                if this_validation_loss < best_validation_loss:
-
-                    #improve patience if loss improvement is good enough
-                    if this_validation_loss < best_validation_loss *  \
-                       improvement_threshold:
-                        patience = max(patience, mini_batch_count * patience_increase)
-
-                    # save best validation score and iteration number
-                    best_validation_loss = this_validation_loss
-                    best_iter = mini_batch_count
-
-
-                    # test it on the test set
-                    test_losses = 0
-
-                    test_iterator = test_dataset.iterator(batch_size=batch_size,
-                                                      num_batches=n_test_batches,
-                                                      mode='even_shuffled_sequential', type='default')
-
-
-
-                    for j in xrange(n_test_batches):
-                        batch_x, batch_y = test_iterator.next()
-                        #batch_x = downscale_3d(batch_x, downsample_factor)
-                        #batch_y = downscale_3d(batch_y, downsample_factor)
-
-                        test_losses += test_model(batch_x, batch_y)
-                        test_score = test_losses/n_test_batches
-
-
-                    print(('     epoch %i, minibatch %i/%i, test error of '
-                           'best model %f %%') %
-                          (epoch_count, minibatch_index + 1, n_train_batches,
-                           test_score * 100.))
-                    """
+                print(('     epoch %i, minibatch %i/%i, test error of '
+                       'best model %f %%') %
+                      (epoch_count, minibatch_index + 1, n_train_batches,
+                       this_validation_loss[0] * 100.))
+                    
 
             if patience <= mini_batch_count:
                 done_looping = True
                 break
 
+
+
+
     end_time = time.clock()
     print('Optimization complete.')
     print('Best validation score of %f %% obtained at iteration %i, '
-          'with test performance %f %%' %
-          (best_validation_loss * 100., best_iter + 1, test_score * 100.))
+           % (best_validation_loss[0] * 100., best_iter + 1))
     print >> sys.stderr, ('The code for file ' +
                           os.path.split(__file__)[1] +
                           ' ran for %.2fm' % ((end_time - start_time) / 60.))

@@ -20,7 +20,7 @@ from theano.tensor.signal import downsample
 from theano.tensor.nnet import conv
 from theano.tensor.nnet.conv3d2d import *
 
-from logistic_sgd import LogisticRegression
+#from logistic_sgd import LogisticRegression
 from datasets.model_net_dataset import ModelNetDataset
 from datasets.point_cloud_hdf5_dataset import  PointCloud_HDF5_Dataset
 from visualization.visualize import *
@@ -29,6 +29,7 @@ from layers.hidden_layer import *
 from layers.conv_layer_3d import *
 from layers.layer_utils import *
 from layers.recon_layer import *
+from layers.logistic_regression_layer import *
 from layers.max_pool_layer_3d import *
 
 def softmax_stable(x):
@@ -52,9 +53,9 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
     rng = numpy.random.RandomState(23455)
 
     # compute number of minibatches for training, validation and testing
-    n_train_batches = 10
-    n_valid_batches = 10
-    n_test_batches = 10
+    n_train_batches = 50
+    n_valid_batches = 20
+    n_test_batches = 20
     batch_size = 10
 
     xdim = 36
@@ -133,7 +134,7 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
         input=layer3_input,
         n_in=nkerns[2] * newZ * newY * newX,
         n_out=1000,
-        activation=leaky_relu, drop=drop
+        activation=relu, drop=drop
     )
 
     layer4 = HiddenLayer(
@@ -141,16 +142,21 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
         input=layer3.output,
         n_in=1000,
         n_out=500,
-        activation=leaky_relu, drop=drop
+        activation=relu, drop=drop
     )
 
 
-    out_layer = HiddenLayer(
-        rng,
+    # out_layer = HiddenLayer(
+    #     rng,
+    #     input=layer4.output,
+    #     n_in=500,
+    #     n_out=32,
+    #     activation=softmax_stable, drop=numpy.cast['int32'](0)
+    # )
+    out_layer = LogisticRegression(
         input=layer4.output,
         n_in=500,
         n_out=32,
-        activation=softmax_stable, drop=numpy.cast['int32'](0)
     )
 
     # create a list of all model parameters to be fit by gradient descent
@@ -160,7 +166,7 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
     #cost = layer3.cross_entropy_error(y)
     #cost = layer4.single_pixel_cost(y)
     #L1 = abs(layer1.W).sum() + abs(layer2.W).sum()
-    cost = out_layer.cross_entropy_error(y) #+ 0.0000001*L1
+    cost = out_layer.negative_log_likelihood(y) #+ 0.0000001*L1
 
     # create a function to compute the mistakes that are made by the model
     test_model = theano.function(
@@ -186,6 +192,15 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
             drop: numpy.cast['int32'](0)
         }, on_unused_input='ignore', allow_input_downcast=True
     )
+
+    # demonstrate_model_pre_softmax = theano.function(
+    #     [x,y],
+    #     out_layer.lin_output,
+    #     givens={
+    #         drop: numpy.cast['int32'](0)
+    #     }, on_unused_input='ignore', allow_input_downcast=True
+    # )
+
 
 
     # create a list of gradients for all model parameters
@@ -269,14 +284,16 @@ def evaluate(learning_rate=0.001, n_epochs=2000,
                 print 'training @ iter = ', mini_batch_count
 
             mini_batch_x, mini_batch_y = train_iterator.next()
-            "mini batch_y shape"
-            print mini_batch_y.shape
 
-            # import IPython
-            # IPython.embed()
+            # print "start demonstrate_model_pre_softmax"
+            # print demonstrate_model_pre_softmax(mini_batch_x, mini_batch_y)
+            # print "end demonstrate_model_pre_softmax"
+
+            # print "start demonstrating model"
+            # print demonstrate_model(mini_batch_x, mini_batch_y)[0]
+            # print "end demonstrating model"
 
             cost_ij = train_model(mini_batch_x, mini_batch_y)
-            #print "cost_ij: " + str(cost_ij)
 
             if (mini_batch_count + 1) % validation_frequency == 0:
 
