@@ -239,8 +239,9 @@ def numpy_jaccard_similarity(a, b):
     Returns the number of pixels of the intersection of two voxel grids divided by the number of pixels in the union.
     The inputs are expected to be numpy 5D ndarrays in BZCXY format.
     """
-    return np.mean(np.sum(a*b,       axis=(1, 2, 3, 4))
-                   /np.sum((a+b)-a*b, axis=(1, 2, 3, 4)))
+    return numpy.mean(numpy.sum(a*b,       axis=(1, 2, 3, 4))
+                      / numpy.sum((a+b)-a*b, axis=(1, 2, 3, 4)))
+
 
 '''
 def randomly_downscale_examples(X, Y, new_sidelength):
@@ -284,6 +285,7 @@ def randomly_downscale_examples(X, Y, new_sidelength):
         Y_output[n, :, 0, :, :] = Y_temp
     return X_output, Y_output
 '''
+
 
 def randomly_translate_examples(X, Y):
     """
