@@ -242,11 +242,11 @@ def numpy_jaccard_similarity(a, b):
     return np.mean(np.sum(a*b,       axis=(1, 2, 3, 4))
                    /np.sum((a+b)-a*b, axis=(1, 2, 3, 4)))
 
-
-def jitter_examples(X, Y, jitter_radius):
+'''
+def randomly_downscale_examples(X, Y, new_sidelength):
     """
-    Takes a set of voxel training data (represented as 1 channel 5d BZCXY arrays) and shifts them to a random point in
-    3D the cube while making sure that no occupied voxels get clipped.
+    Takes a set of voxel training data (represented as 1 channel 5d BZCXY arrays) and downscales them by a random factor
+     while making sure that the shape doesn't become too small.
     """
     X_array_shape = X.shape
     Y_array_shape = Y.shape
@@ -270,6 +270,48 @@ def jitter_examples(X, Y, jitter_radius):
         newMinZ = np.randint(X_array_shape[1] - (maxZ - minZ))
         newMinX = np.randint(X_array_shape[3] - (maxX - minX))
         newMinY = np.randint(X_array_shape[4] - (maxY - minY))
+
+        X_temp = numpy.roll(numpy.roll(numpy.roll(X[n, :, 0, :, :],
+                                                  numpy.round(newMinZ-minZ), axis=0),
+                                                  numpy.round(newMinX-minX), axis=1),
+                                                  numpy.round(newMinY-minY), axis=2)
+        Y_temp = numpy.roll(numpy.roll(numpy.roll(Y[n, :, 0, :, :],
+                                                  numpy.round(newMinZ-minZ), axis=0),
+                                                  numpy.round(newMinX-minX), axis=1),
+                                                  numpy.round(newMinY-minY), axis=2)
+
+        X_output[n, :, 0, :, :] = X_temp
+        Y_output[n, :, 0, :, :] = Y_temp
+    return X_output, Y_output
+'''
+
+def randomly_translate_examples(X, Y):
+    """
+    Takes a set of voxel training data (represented as 1 channel 5d BZCXY arrays) and shifts them to a random point in
+    3D the cube while making sure that no occupied voxels get clipped.
+    """
+    X_array_shape = X.shape
+    Y_array_shape = Y.shape
+    X_output = numpy.zeros(shape=X_array_shape)
+    Y_output = numpy.zeros(shape=Y_array_shape)
+
+    if X_array_shape != Y_array_shape:
+        raise(NotImplementedError, 'X and Y must have the same shape')
+
+    for n in xrange(X_array_shape[0]):
+        X_nonzeros = numpy.nonzero(X[n, :, 0, :, :])
+        Y_nonzeros = numpy.nonzero(Y[n, :, 0, :, :])
+
+        minZ = min(min(X_nonzeros[0]), min(Y_nonzeros[0]))
+        maxZ = max(min(X_nonzeros[0]), max(Y_nonzeros[0]))
+        minX = min(min(X_nonzeros[1]), min(Y_nonzeros[1]))
+        maxX = max(min(X_nonzeros[1]), max(Y_nonzeros[1]))
+        minY = min(min(X_nonzeros[2]), min(Y_nonzeros[2]))
+        maxY = max(min(X_nonzeros[2]), max(Y_nonzeros[2]))
+
+        newMinZ = numpy.randint(X_array_shape[1] - (maxZ - minZ))
+        newMinX = numpy.randint(X_array_shape[3] - (maxX - minX))
+        newMinY = numpy.randint(X_array_shape[4] - (maxY - minY))
 
         X_temp = numpy.roll(numpy.roll(numpy.roll(X[n, :, 0, :, :],
                                                   numpy.round(newMinZ-minZ), axis=0),
