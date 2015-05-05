@@ -11,7 +11,8 @@ class Geometric3DDataset:
     # Task types
     CLASSIFICATION_TASK = 0
     KINECT_COMPLETION_TASK = 1
-    HALF_COMPLETION_TASK = 2
+    KINECT_SHADOW_COMPLETION_TASK = 2
+    HALF_COMPLETION_TASK = 3
 
     def __init__(self,
                  patch_size=32,
@@ -95,7 +96,7 @@ class Geometric3dIterator():
 
         return solid_figures
 
-    def __kinect_scan(self, solid_figures):
+    def __kinect_scan(self, solid_figures, also_fill_shadow=False):
         """
         Takes a 5-d boolean numpy array representing batches of 3-d data in BZCXY format.
         Returns a 5-d array of the same shape, containing only one "on" z value (the one with the lowest index) per each (x, y) pair.
@@ -106,7 +107,10 @@ class Geometric3dIterator():
                 for y in xrange(self.patch_size):
                     for z in xrange(self.patch_size):
                         if solid_figures[i, z, 0, x, y] == 1:
-                            kinect_result[i, z, 0, x, y] = 1
+                            if also_fill_shadow:
+                                kinect_result[i, z:, 0, x, y] = 1
+                            else:
+                                kinect_result[i, z, 0, x, y] = 1
                             break
         return kinect_result
 
@@ -127,7 +131,11 @@ class Geometric3dIterator():
         elif self.task == Geometric3DDataset.KINECT_COMPLETION_TASK:
             labels = self.__generate_solid_figures(
                 geometry_types=(Geometric3DDataset.SPHERE_TYPE,) * self.batch_size)
-            data = self.__kinect_scan(labels)
+            data = self.__kinect_scan(labels, also_fill_shadow=False)
+        elif self.task == Geometric3DDataset.KINECT_SHADOW_COMPLETION_TASK:
+            labels = self.__generate_solid_figures(
+                geometry_types=(Geometric3DDataset.SPHERE_TYPE,) * self.batch_size)
+            data = self.__kinect_scan(labels, also_fill_shadow=True)
         elif self.task == Geometric3DDataset.HALF_COMPLETION_TASK:
             geometry_types = np.random.randint(0, self.num_labels, self.batch_size)
             temp = self.__generate_solid_figures(
