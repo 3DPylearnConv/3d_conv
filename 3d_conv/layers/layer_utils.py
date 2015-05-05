@@ -311,9 +311,9 @@ def randomly_translate_examples(X, Y):
         minY = min(min(X_nonzeros[2]), min(Y_nonzeros[2]))
         maxY = max(min(X_nonzeros[2]), max(Y_nonzeros[2]))
 
-        newMinZ = numpy.randint(X_array_shape[1] - (maxZ - minZ))
-        newMinX = numpy.randint(X_array_shape[3] - (maxX - minX))
-        newMinY = numpy.randint(X_array_shape[4] - (maxY - minY))
+        newMinZ = numpy.random.randint(X_array_shape[1] - (maxZ - minZ))
+        newMinX = numpy.random.randint(X_array_shape[3] - (maxX - minX))
+        newMinY = numpy.random.randint(X_array_shape[4] - (maxY - minY))
 
         X_temp = numpy.roll(numpy.roll(numpy.roll(X[n, :, 0, :, :],
                                                   numpy.round(newMinZ-minZ), axis=0),
