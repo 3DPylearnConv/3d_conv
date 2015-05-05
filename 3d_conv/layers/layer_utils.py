@@ -244,10 +244,12 @@ def numpy_jaccard_similarity(a, b):
 
 
 '''
-def randomly_downscale_examples(X, Y, new_sidelength):
+def randomly_downscale_examples(X, Y, new_sidelength, do_you_plan_to_apply_random_translation_later=False):
     """
     Takes a set of voxel training data (represented as 1 channel 5d BZCXY arrays) and downscales them by a random factor
      while making sure that the shape doesn't become too small.
+     The variable do_you_plan_to_apply_random_translation_later is relevant in order to correct for the nonuniform
+      sampling as a function of size in the randomly_translate_examples function.
     """
     X_array_shape = X.shape
     Y_array_shape = Y.shape
@@ -268,18 +270,7 @@ def randomly_downscale_examples(X, Y, new_sidelength):
         minY = min(min(X_nonzeros[2]), min(Y_nonzeros[2]))
         maxY = max(min(X_nonzeros[2]), max(Y_nonzeros[2]))
 
-        newMinZ = np.randint(X_array_shape[1] - (maxZ - minZ))
-        newMinX = np.randint(X_array_shape[3] - (maxX - minX))
-        newMinY = np.randint(X_array_shape[4] - (maxY - minY))
-
-        X_temp = numpy.roll(numpy.roll(numpy.roll(X[n, :, 0, :, :],
-                                                  numpy.round(newMinZ-minZ), axis=0),
-                                                  numpy.round(newMinX-minX), axis=1),
-                                                  numpy.round(newMinY-minY), axis=2)
-        Y_temp = numpy.roll(numpy.roll(numpy.roll(Y[n, :, 0, :, :],
-                                                  numpy.round(newMinZ-minZ), axis=0),
-                                                  numpy.round(newMinX-minX), axis=1),
-                                                  numpy.round(newMinY-minY), axis=2)
+        # TODO: to the translation here
 
         X_output[n, :, 0, :, :] = X_temp
         Y_output[n, :, 0, :, :] = Y_temp
