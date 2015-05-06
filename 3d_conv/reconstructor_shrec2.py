@@ -300,7 +300,7 @@ def evaluate(learning_rate=0.001, n_epochs=1000,
                                   # on the validation set; in this case we
                                   # check every epoch
 
-    best_validation_loss = numpy.inf
+    best_test_loss = numpy.inf
     best_iter = 0
     test_score = [0,0]
     start_time = time.clock()
@@ -311,7 +311,7 @@ def evaluate(learning_rate=0.001, n_epochs=1000,
 
     train_dataset = ReconstructionDataset(hdf5_filepath='../data/shrec_24x24x24_2_50_objects.h5', mode='train')
     #test_dataset = ReconstructionDataset(hdf5_filepath='../data/drill_rot_yaw_24x24x24.h5', mode='train')
-    validation_dataset = ReconstructionDataset(hdf5_filepath='../data/shrec_24x24x24_2_50_objects.h5', mode='test')
+    test_dataset = ReconstructionDataset(hdf5_filepath='../data/shrec_24x24x24_2_50_objects.h5', mode='test')
 
     epoch_count = 0
 
@@ -336,31 +336,32 @@ def evaluate(learning_rate=0.001, n_epochs=1000,
             #mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
 
             cost_ij = train_model(mini_batch_x, mini_batch_y)
+
             if (mini_batch_count + 1) % validation_frequency == 0:
-                this_validation_loss = [0,0]
+                this_test_loss = [0,0]
 
 
-                validation_iterator = validation_dataset.iterator(batch_size=batch_size, num_batches=n_valid_batches)
+                test_iterator = test_dataset.iterator(batch_size=batch_size, num_batches=n_test_batches)
 
                 # compute zero-one loss on validation set
-                validation_losses = [0,0]
+                test_losses = [0,0]
 
               
-                for i in xrange(n_valid_batches):
-                    mini_batch_x, mini_batch_y = validation_iterator.next()
+                for i in xrange(n_test_batches):
+                    mini_batch_x, mini_batch_y = test_iterator.next()
 
                     #mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
                     #mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
                     output = validate_model(mini_batch_x, mini_batch_y)
 
-                    validation_losses[0] += output[0]
-                    validation_losses[1] += output[1]
+                    test_losses[0] += output[0]
+                    test_losses[1] += output[1]
                     #validation_losses[0] += validation_output[0]
                     #validation_losses[1] += validation_output[1]
                     
 
-                this_validation_loss[0] = validation_losses[0]/n_valid_batches
-                this_validation_loss[1] = validation_losses[1]/n_valid_batches
+                this_test_loss[0] = test_losses[0]/n_test_batches
+                this_test_loss[1] = test_losses[1]/n_test_batches
 
 
                 training_losses = [0,0]
@@ -381,10 +382,11 @@ def evaluate(learning_rate=0.001, n_epochs=1000,
 
                 training_losses[0] = training_losses[0]/n_valid_batches
                 training_losses[1] = training_losses[1]/n_valid_batches
+
                 print "training cost: ", cost_ij
-                print('epoch %i, minibatch %i/%i, validation error %f %%' %
+                print('epoch %i, minibatch %i/%i, train error %f %%' %
                       (epoch_count, minibatch_index + 1, n_train_batches,
-                       this_validation_loss[0] * 100.))
+                       training_losses[0] * 100.))
 
 
                 # get 1 example for demonstrating the model:
@@ -419,8 +421,8 @@ def evaluate(learning_rate=0.001, n_epochs=1000,
 
                     """
 
-                if this_validation_loss[0] < best_validation_loss:
-                    best_validation_loss = this_validation_loss[0]
+                if this_test_loss[0] < best_test_loss:
+                    best_validation_loss = this_test_loss[0]
                     numpy.save('../shrec/50objects/run1/layer0.npy', layer0.params)
                     numpy.save('../shrec/50objects/run1/layer1.npy', layer1.params)
                     numpy.save('../shrec/50objects/run1/layer05.npy', layer05.params)
@@ -454,14 +456,14 @@ def evaluate(learning_rate=0.001, n_epochs=1000,
                 """
 
                 f = open("../shrec/50objects/run1/50objectskerns606570hidden300035004000log.txt", "a")
-                toOutput = "%i %f %f %f %f %f\n" % (epoch_count, cost_ij, training_losses[0], training_losses[1], this_validation_loss[0], this_validation_loss[1])
+                toOutput = "%i %f %f %f %f %f\n" % (epoch_count, cost_ij, training_losses[0], training_losses[1], this_test_loss[0], this_test_loss[1])
                 f.write(toOutput)
                 f.close()
 
                 print(('     epoch %i, minibatch %i/%i, test error of '
                        'best model %f %%') %
                       (epoch_count, minibatch_index + 1, n_train_batches,
-                       this_validation_loss[0] * 100.))
+                       this_test_loss[0] * 100.))
                     
 
             if patience <= mini_batch_count:
