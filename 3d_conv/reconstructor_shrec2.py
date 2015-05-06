@@ -119,9 +119,9 @@ def evaluate(learning_rate=0.001, n_epochs=1000,
 
 
     rng = numpy.random.RandomState(23455)
-    n_train_batches = 80
-    n_valid_batches = 3
-    n_test_batches = 20
+    n_train_batches = 100 #25 objects in dataset -> 25 times 4
+    n_valid_batches = 10
+    n_test_batches = 10
 
     original_size = 24
     downsample_factor = 1
@@ -201,15 +201,22 @@ def evaluate(learning_rate=0.001, n_epochs=1000,
         rng,
         input=layer2.output,
         n_in=3000,
+        n_out=3500,
+        activation=relu, drop=drop
+    )
+
+    layer35 = HiddenLayer(
+        rng,
+        input=layer3.output,
+        n_in=3500,
         n_out=4000,
         activation=relu, drop=drop
     )
 
-
     # classify the values of the fully-connected sigmoidal layer
     layer4 = reconLayer(
         rng,
-        input=layer3.output,
+        input=layer35.output,
         n_in=4000,
         n_out=recon_size,
         activation=T.nnet.sigmoid
@@ -217,7 +224,7 @@ def evaluate(learning_rate=0.001, n_epochs=1000,
     # the cost we minimize during training is the NLL of the model
     cost = layer4.cross_entropy_error(y)
     # create a list of all model parameters to be fit by gradient descent
-    params = layer4.params + layer3.params + layer2.params + layer1.params + layer05.params + layer0.params
+    params = layer4.params + layer35.params + layer3.params + layer2.params + layer1.params + layer05.params + layer0.params
 
     #L1 = abs(layer0.W).sum() + abs(layer1.W).sum() + abs(layer2.W).sum() + abs(layer3.W).sum()
 
@@ -302,9 +309,9 @@ def evaluate(learning_rate=0.001, n_epochs=1000,
     patch_size = original_size
 
 
-    train_dataset = ReconstructionDataset(hdf5_filepath='../data/shrec_24x24x24.h5', mode='train')
+    train_dataset = ReconstructionDataset(hdf5_filepath='../data/shrec_24x24x24_2_50_objects.h5', mode='train')
     #test_dataset = ReconstructionDataset(hdf5_filepath='../data/drill_rot_yaw_24x24x24.h5', mode='train')
-    validation_dataset = ReconstructionDataset(hdf5_filepath='../data/shrec_24x24x24.h5', mode='test')
+    validation_dataset = ReconstructionDataset(hdf5_filepath='../data/shrec_24x24x24_2_50_objects.h5', mode='test')
 
     epoch_count = 0
 
@@ -414,12 +421,13 @@ def evaluate(learning_rate=0.001, n_epochs=1000,
 
                 if this_validation_loss[0] < best_validation_loss:
                     best_validation_loss = this_validation_loss[0]
-                    numpy.save('../shrec/run1/layer0.npy', layer0.params)
-                    numpy.save('../shrec/run1/layer1.npy', layer1.params)
-                    numpy.save('../shrec/run1/layer05.npy', layer05.params)
-                    numpy.save('../shrec/run1/layer2.npy', layer2.params)
-                    numpy.save('../shrec/run1/layer3.npy', layer3.params)
-                    numpy.save('../shrec/run1/layer4.npy', layer4.params) 
+                    numpy.save('../shrec/50objects/run1/layer0.npy', layer0.params)
+                    numpy.save('../shrec/50objects/run1/layer1.npy', layer1.params)
+                    numpy.save('../shrec/50objects/run1/layer05.npy', layer05.params)
+                    numpy.save('../shrec/50objects/run1/layer2.npy', layer2.params)
+                    numpy.save('../shrec/50objects/run1/layer3.npy', layer3.params)
+                    numpy.save('../shrec/50objects/run1/layer35.npy', layer35.params)
+                    numpy.save('../shrec/50objects/run1/layer4.npy', layer4.params) 
                           
                 """
                
@@ -445,7 +453,7 @@ def evaluate(learning_rate=0.001, n_epochs=1000,
                 test_losses[1] = test_output[1]
                 """
 
-                f = open("../shrec/run1/percenttest20kerns606570hidden35004000log.txt", "a")
+                f = open("../shrec/50objects/run1/50objectskerns606570hidden300035004000log.txt", "a")
                 toOutput = "%i %f %f %f %f %f\n" % (epoch_count, cost_ij, training_losses[0], training_losses[1], this_validation_loss[0], this_validation_loss[1])
                 f.write(toOutput)
                 f.close()
@@ -466,7 +474,7 @@ def evaluate(learning_rate=0.001, n_epochs=1000,
     end_time = time.clock()
     print('Optimization complete.')
     print('Best validation score of %f %% obtained at iteration %i, '
-           % (best_validation_loss[0] * 100., best_iter + 1))
+           % (best_validation_loss * 100., best_iter + 1))
     print >> sys.stderr, ('The code for file ' +
                           os.path.split(__file__)[1] +
                           ' ran for %.2fm' % ((end_time - start_time) / 60.))
