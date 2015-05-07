@@ -115,7 +115,7 @@ class reconLayer(object):
 
 def evaluate(learning_rate=0.001, n_epochs=1000,
                     dataset='mnist.pkl.gz',
-                    nkerns=[60,65,70], batch_size=30):
+                    nkerns=[70,75,80], batch_size=30):
 
 
     rng = numpy.random.RandomState(23455)
@@ -302,9 +302,9 @@ def evaluate(learning_rate=0.001, n_epochs=1000,
     patch_size = original_size
 
 
-    train_dataset = ReconstructionDataset(hdf5_filepath='../data/shrec_24x24x24.h5', mode='train')
+    train_dataset = ReconstructionDataset(hdf5_filepath='../data/shrec_24x24x24_2_25_objects.h5', mode='train')
     #test_dataset = ReconstructionDataset(hdf5_filepath='../data/drill_rot_yaw_24x24x24.h5', type_is_training=False, num_angle_divisions=4, percent_testing=.7)
-    validation_dataset = ReconstructionDataset(hdf5_filepath='../data/shrec_24x24x24.h5', mode='not_train')
+    validation_dataset = ReconstructionDataset(hdf5_filepath='../data/shrec_24x24x24_2_25_objects.h5', mode='not_train')
 
     epoch_count = 0
 
@@ -358,6 +358,29 @@ def evaluate(learning_rate=0.001, n_epochs=1000,
 
 
 
+                # compute zero-one loss on validation set
+                training_losses = [0,0]
+
+              
+                for i in xrange(n_valid_batches):
+                    mini_batch_x, mini_batch_y = train_iterator.next()
+
+                    #mini_batch_x = downscale_3d(mini_batch_x, downsample_factor)
+                    #mini_batch_y = downscale_3d(mini_batch_y, downsample_factor)
+                    output = validate_model(mini_batch_x, mini_batch_y)
+
+                    training_losses[0] += output[0]
+                    training_losses[1] += output[1]
+                    #validation_losses[0] += validation_output[0]
+                    #validation_losses[1] += validation_output[1]
+                    
+                this_training_loss= [0,0]
+                this_training_loss[0] = validation_losses[0]/n_valid_batches
+                this_training_loss[1] = validation_losses[1]/n_valid_batches
+
+
+
+
                 print "training cost: ", cost_ij
                 print('epoch %i, minibatch %i/%i, validation error %f %%' %
                       (epoch_count, minibatch_index + 1, n_train_batches,
@@ -398,12 +421,12 @@ def evaluate(learning_rate=0.001, n_epochs=1000,
 
                 if this_validation_loss[0] < best_validation_loss:
                     best_validation_loss = this_validation_loss[0]
-                    numpy.save('../shrec/run1/layer0.npy', layer0.params)
-                    numpy.save('../shrec/run1/layer1.npy', layer1.params)
-                    numpy.save('../shrec/run1/layer05.npy', layer05.params)
-                    numpy.save('../shrec/run1/layer2.npy', layer2.params)
-                    numpy.save('../shrec/run1/layer3.npy', layer3.params)
-                    numpy.save('../shrec/run1/layer4.npy', layer4.params) 
+                    numpy.save('../25objects/run2/layer0.npy', layer0.params)
+                    numpy.save('../25objects/run2/layer1.npy', layer1.params)
+                    numpy.save('../25objects/run2/layer05.npy', layer05.params)
+                    numpy.save('../25objects/run2/layer2.npy', layer2.params)
+                    numpy.save('../25objects/run2/layer3.npy', layer3.params)
+                    numpy.save('../25objects/run2/layer4.npy', layer4.params) 
                           
                 """
                
@@ -429,8 +452,8 @@ def evaluate(learning_rate=0.001, n_epochs=1000,
                 test_losses[1] = test_output[1]
                 """
 
-                f = open("../shrec/run1/percenttest20kerns606570hidden35004000log.txt", "a")
-                toOutput = "%i %f %f %f\n" % (epoch_count, cost_ij, this_validation_loss[0], this_validation_loss[1])
+                f = open("../25objects/run2/percenttest20kerns65707525objectshidd2n35004000log.txt", "a")
+                toOutput = "%i %f %f %f %f %f\n" % (epoch_count, cost_ij, this_training_loss[0], this_training_loss[1], this_validation_loss[0], this_validation_loss[1])
                 f.write(toOutput)
                 f.close()
 
