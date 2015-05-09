@@ -230,7 +230,7 @@ def theano_jaccard_similarity(a, b):
     """
     a = a.flatten(ndim=2)
     b = b.flatten(ndim=2)
-    return T.mean(T.sum(a*b,       axis=1)
+    return T.mean(T.sum(a*b,         axis=1)
                   / T.sum((a+b)-a*b, axis=1))
 
 
@@ -239,8 +239,10 @@ def numpy_jaccard_similarity(a, b):
     Returns the number of pixels of the intersection of two voxel grids divided by the number of pixels in the union.
     The inputs are expected to be numpy 5D ndarrays in BZCXY format.
     """
-    return numpy.mean(numpy.sum(a*b,       axis=(1, 2, 3, 4))
-                      / numpy.sum((a+b)-a*b, axis=(1, 2, 3, 4)))
+    a = a.reshape(a.shape[0], -1)
+    b = b.reshape(a.shape[0], -1)
+    return numpy.mean(numpy.sum(a*b,         axis=1)
+                      / numpy.sum((a+b)-a*b, axis=1))
 
 
 '''
