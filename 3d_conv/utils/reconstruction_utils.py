@@ -37,6 +37,7 @@ def create_voxel_grid_around_point(points, patch_center, voxel_resolution=0.001,
 
     voxel_grid[mask] = 1
 
+
     return voxel_grid
 
 

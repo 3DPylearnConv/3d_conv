@@ -16,7 +16,9 @@ import math
 class ReconstructionDataset():
 
     def __init__(self,
-                 hdf5_filepath='../data/shrec_24x24x24.h5', mode='train', train_indices_file="shrec_recon_indices.npy"):
+                 hdf5_filepath='../data/shrec_24x24x24.h5',
+                 mode='train',
+                 train_indices_file="shrec_recon_indices.npy"):
 
         self.mode = mode
         self.dset = h5py.File(hdf5_filepath, 'r')

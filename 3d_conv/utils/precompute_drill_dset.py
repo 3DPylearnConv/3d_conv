@@ -3,19 +3,19 @@ from datasets.drill_reconstruction_dataset import DrillReconstructionDataset, bu
 from multiprocessing import Pool
 
 PATCH_SIZE = 24
-OUT_FILE_PATH = "drill_rot_yaw_24x24x24.h5"
+OUT_FILE_PATH = "drill_1000_random_24x24x24.h5"
 
 from multiprocessing import Process, Queue
 
 def read(index):
-    # single_view_pointcloud_filepath = drill_dataset.examples[index][0]
-    # pose_filepath = drill_dataset.examples[index][1]
-    # model_filepath = drill_dataset.examples[index][2]
-    index_string = str(index)
+    single_view_pointcloud_filepath = drill_dataset.examples[index][0]
+    pose_filepath = drill_dataset.examples[index][1]
+    model_filepath = drill_dataset.examples[index][2]
+    #index_string = str(index)
 
-    single_view_pointcloud_filepath = '/srv/3d_conv_data/gazebo_reconstruction_drill_yaw_only/pointclouds/cordless_drill/_0_0_' + index_string + '_pc.npy'
-    pose_filepath = '/srv/3d_conv_data/gazebo_reconstruction_drill_yaw_only/pointclouds/cordless_drill/_0_0_' + index_string + '_pose.npy'
-    model_filepath = '/srv/3d_conv_data/gazebo_reconstruction_drill_yaw_only/models/cordless_drill.binvox'
+    #single_view_pointcloud_filepath = '/srv/3d_conv_data/gazebo_reconstruction_drill_yaw_only/pointclouds/cordless_drill/_0_0_' + index_string + '_pc.npy'
+    #pose_filepath = '/srv/3d_conv_data/gazebo_reconstruction_drill_yaw_only/pointclouds/cordless_drill/_0_0_' + index_string + '_pose.npy'
+    #model_filepath = '/srv/3d_conv_data/gazebo_reconstruction_drill_yaw_only/models/cordless_drill.binvox'
     x, y = build_training_example(model_filepath, pose_filepath, single_view_pointcloud_filepath, PATCH_SIZE)
     return x,y
 
@@ -38,8 +38,10 @@ def reader(index_queue, examples_queue):
 if __name__=='__main__':
 
     drill_dataset = DrillReconstructionDataset(
-        models_dir="/srv/3d_conv_data/gazebo_reconstruction_drill_yaw_only/models/",
-        pc_dir="/srv/3d_conv_data/gazebo_reconstruction_drill_yaw_only/pointclouds/",
+        #models_dir="/srv/3d_conv_data/gazebo_reconstruction_drill_yaw_only/models/",
+        #pc_dir="/srv/3d_conv_data/gazebo_reconstruction_drill_yaw_only/pointclouds/",
+        models_dir="/srv/3d_conv_data/model_reconstruction_1000/models/",
+        pc_dir="/srv/3d_conv_data/model_reconstruction_1000/pointclouds/",
         patch_size=PATCH_SIZE)
 
     num_examples = drill_dataset.get_num_examples()
@@ -55,7 +57,7 @@ if __name__=='__main__':
     examples_queue = Queue(maxsize=100)
 
     print("staring readers")
-    num_readers = 5
+    num_readers = 8
     for i in range(num_readers):
         reader_p = Process(target=reader, args=(index_queue, examples_queue))
         reader_p.daemon = True

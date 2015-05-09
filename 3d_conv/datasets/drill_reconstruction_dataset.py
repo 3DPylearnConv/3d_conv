@@ -102,7 +102,7 @@ def build_training_example(model_filepath, pose_filepath, single_view_pointcloud
     # viz.visualize_pointclouds(pc2_out.T, non_zero_arr1.T[:, 0:3], False, True)
     # import IPython
     # IPython.embed()
-    return x,y
+    return x, y
 
 
 def create_voxel_grid_around_point(points, patch_center, voxel_resolution=0.001, num_voxels_per_dim=72):
@@ -161,8 +161,8 @@ class DrillReconstructionIterator(collections.Iterator):
         for i in range(len(batch_indices)):
             index = batch_indices[i]
             model_filepath = self.dataset.model_fullfilename
-            single_view_pointcloud_filepath = self.dataset.pointclouds[index][0]
-            pose_filepath = self.dataset.pointclouds[index][1]
+            single_view_pointcloud_filepath = self.dataset.examples[index][0]
+            pose_filepath = self.dataset.examples[index][1]
 
             x, y = build_training_example(model_filepath, pose_filepath, single_view_pointcloud_filepath, patch_size)
 
