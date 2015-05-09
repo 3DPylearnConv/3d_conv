@@ -237,7 +237,7 @@ def theano_jaccard_similarity(a, b):
 def numpy_jaccard_similarity(a, b):
     """
     Returns the number of pixels of the intersection of two voxel grids divided by the number of pixels in the union.
-    The inputs are expected to be numpy 5D ndarrays in BZCXY format.
+    The inputs are expected to be numpy ndarrays where we flatten all dimensions except for the first, and we average the simmilarity accross the 1st dimension.
     """
     a = a.reshape(a.shape[0], -1)
     b = b.reshape(a.shape[0], -1)
