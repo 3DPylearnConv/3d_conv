@@ -223,21 +223,100 @@ def voxel_to_mesh(filename_in, filename_out):
 
 
 def theano_jaccard_similarity(a, b):
-    '''
+    """
     Returns the number of pixels of the intersection of two voxel grids divided by the number of pixels in the union.
     A return value of 1 means that the two binary grids are identical.
     The inputs are expected to be theano tensors where we flatten all dimensions except for the first, and we average the simmilarity accross the 1st dimension.
-    '''
+    """
     a = a.flatten(ndim=2)
     b = b.flatten(ndim=2)
-    return T.mean( T.sum(a*b,       axis=1) \
-                    /T.sum((a+b)-a*b, axis=1) )
+    return T.mean(T.sum(a*b,         axis=1)
+                  / T.sum((a+b)-a*b, axis=1))
 
 
 def numpy_jaccard_similarity(a, b):
-    '''
+    """
     Returns the number of pixels of the intersection of two voxel grids divided by the number of pixels in the union.
-    The inputs are expected to be numpy 5D ndarrays in BZCXY format.
-    '''
-    return np.mean( np.sum(a*b,       axis=(1, 2, 3, 4)) \
-                    /np.sum((a+b)-a*b, axis=(1, 2, 3, 4)) )
+    The inputs are expected to be numpy ndarrays where we flatten all dimensions except for the first, and we average the simmilarity accross the 1st dimension.
+    """
+    a = a.reshape(a.shape[0], -1)
+    b = b.reshape(a.shape[0], -1)
+    return numpy.mean(numpy.sum(a*b,         axis=1)
+                      / numpy.sum((a+b)-a*b, axis=1))
+
+
+'''
+def randomly_downscale_examples(X, Y, new_sidelength, do_you_plan_to_apply_random_translation_later=False):
+    """
+    Takes a set of voxel training data (represented as 1 channel 5d BZCXY arrays) and downscales them by a random factor
+     while making sure that the shape doesn't become too small.
+     The variable do_you_plan_to_apply_random_translation_later is relevant in order to correct for the nonuniform
+      sampling as a function of size in the randomly_translate_examples function.
+    """
+    X_array_shape = X.shape
+    Y_array_shape = Y.shape
+    X_output = numpy.zeros(shape=X_array_shape)
+    Y_output = numpy.zeros(shape=Y_array_shape)
+
+    if X_array_shape != Y_array_shape:
+        raise(NotImplementedError, 'X and Y must have the same shape')
+
+    for n in xrange(X_array_shape[0]):
+        X_nonzeros = numpy.nonzero(X[n, :, 0, :, :])
+        Y_nonzeros = numpy.nonzero(Y[n, :, 0, :, :])
+
+        minZ = min(min(X_nonzeros[0]), min(Y_nonzeros[0]))
+        maxZ = max(min(X_nonzeros[0]), max(Y_nonzeros[0]))
+        minX = min(min(X_nonzeros[1]), min(Y_nonzeros[1]))
+        maxX = max(min(X_nonzeros[1]), max(Y_nonzeros[1]))
+        minY = min(min(X_nonzeros[2]), min(Y_nonzeros[2]))
+        maxY = max(min(X_nonzeros[2]), max(Y_nonzeros[2]))
+
+        # TODO: to the translation here
+
+        X_output[n, :, 0, :, :] = X_temp
+        Y_output[n, :, 0, :, :] = Y_temp
+    return X_output, Y_output
+'''
+
+
+def randomly_translate_examples(X, Y):
+    """
+    Takes a set of voxel training data (represented as 1 channel 5d BZCXY arrays) and shifts them to a random point in
+    3D the cube while making sure that no occupied voxels get clipped.
+    """
+    X_array_shape = X.shape
+    Y_array_shape = Y.shape
+    X_output = numpy.zeros(shape=X_array_shape)
+    Y_output = numpy.zeros(shape=Y_array_shape)
+
+    if X_array_shape != Y_array_shape:
+        raise(NotImplementedError, 'X and Y must have the same shape')
+
+    for n in xrange(X_array_shape[0]):
+        X_nonzeros = numpy.nonzero(X[n, :, 0, :, :])
+        Y_nonzeros = numpy.nonzero(Y[n, :, 0, :, :])
+
+        minZ = min(min(X_nonzeros[0]), min(Y_nonzeros[0]))
+        maxZ = max(min(X_nonzeros[0]), max(Y_nonzeros[0]))
+        minX = min(min(X_nonzeros[1]), min(Y_nonzeros[1]))
+        maxX = max(min(X_nonzeros[1]), max(Y_nonzeros[1]))
+        minY = min(min(X_nonzeros[2]), min(Y_nonzeros[2]))
+        maxY = max(min(X_nonzeros[2]), max(Y_nonzeros[2]))
+
+        newMinZ = numpy.random.randint(X_array_shape[1] - (maxZ - minZ))
+        newMinX = numpy.random.randint(X_array_shape[3] - (maxX - minX))
+        newMinY = numpy.random.randint(X_array_shape[4] - (maxY - minY))
+
+        X_temp = numpy.roll(numpy.roll(numpy.roll(X[n, :, 0, :, :],
+                                                  numpy.round(newMinZ-minZ), axis=0),
+                                                  numpy.round(newMinX-minX), axis=1),
+                                                  numpy.round(newMinY-minY), axis=2)
+        Y_temp = numpy.roll(numpy.roll(numpy.roll(Y[n, :, 0, :, :],
+                                                  numpy.round(newMinZ-minZ), axis=0),
+                                                  numpy.round(newMinX-minX), axis=1),
+                                                  numpy.round(newMinY-minY), axis=2)
+
+        X_output[n, :, 0, :, :] = X_temp
+        Y_output[n, :, 0, :, :] = Y_temp
+    return X_output, Y_output
